@@ -4,9 +4,9 @@ namespace Minecraft.World;
 
 public class Chunk
 {
-	public const int SizeX = 16;
-	public const int SizeY = 16;
-	public const int SizeZ = 16;
+	public const int SizeX = 4;
+	public const int SizeY = 4;
+	public const int SizeZ = 4;
 	public static readonly Vector3i ChunkSize = new(SizeX, SizeY, SizeZ);
 	
 	public Block[] Blocks = new Block[SizeX * SizeY * SizeZ];

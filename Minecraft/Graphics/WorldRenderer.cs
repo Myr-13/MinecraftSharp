@@ -30,40 +30,40 @@ public class WorldRenderer
 							continue;
 
 						// -X
-						// Vector3i neighborPosition = globalPosition + new Vector3i(-1, 0, 0);
-						// Block? neighbor = world.GetBlock(neighborPosition);
-						// if (neighbor == null || neighbor.Type == BlockType.Air)
-						// 	faces[(int)Facing.Left][globalPosition] = currentBlock.Type;
-						//
-						// // +X
-						// neighborPosition = globalPosition + new Vector3i(1, 0, 0);
-						// neighbor = world.GetBlock(neighborPosition);
-						// if (neighbor == null || neighbor.Type == BlockType.Air)
-						// 	faces[(int)Facing.Right][globalPosition] = currentBlock.Type;
-						//
-						// // -Z
-						// neighborPosition = globalPosition + new Vector3i(0, 0, -1);
-						// neighbor = world.GetBlock(neighborPosition);
-						// if (neighbor == null || neighbor.Type == BlockType.Air)
-						// 	faces[(int)Facing.Back][globalPosition] = currentBlock.Type;
-						//
-						// // +Z
-						// neighborPosition = globalPosition + new Vector3i(0, 0, 1);
-						// neighbor = world.GetBlock(neighborPosition);
-						// if (neighbor == null || neighbor.Type == BlockType.Air)
-						// 	faces[(int)Facing.Front][globalPosition] = currentBlock.Type;
-						//
-						// // -Y
-						// neighborPosition = globalPosition + new Vector3i(0, -1, 0);
-						// neighbor = world.GetBlock(neighborPosition);
-						// if (neighbor == null || neighbor.Type == BlockType.Air)
-						// 	faces[(int)Facing.Down][globalPosition] = currentBlock.Type;
-						//
-						// // +Y
-						// neighborPosition = globalPosition + new Vector3i(0, 1, 0);
-						// neighbor = world.GetBlock(neighborPosition);
-						// if (neighbor == null || neighbor.Type == BlockType.Air)
-						// 	faces[(int)Facing.Up][globalPosition] = currentBlock.Type;
+						Vector3i neighborPosition = globalPosition + new Vector3i(-1, 0, 0);
+						Block? neighbor = world.GetBlock(neighborPosition);
+						if (neighbor == null || neighbor.Type == BlockType.Air)
+							AddQuad(ref vertices, globalPosition, Facing.Left);
+						
+						// +X
+						neighborPosition = globalPosition + new Vector3i(1, 0, 0);
+						neighbor = world.GetBlock(neighborPosition);
+						if (neighbor == null || neighbor.Type == BlockType.Air)
+							AddQuad(ref vertices, globalPosition, Facing.Right);
+						
+						// -Z
+						neighborPosition = globalPosition + new Vector3i(0, 0, -1);
+						neighbor = world.GetBlock(neighborPosition);
+						if (neighbor == null || neighbor.Type == BlockType.Air)
+							AddQuad(ref vertices, globalPosition, Facing.Back);
+						
+						// +Z
+						neighborPosition = globalPosition + new Vector3i(0, 0, 1);
+						neighbor = world.GetBlock(neighborPosition);
+						if (neighbor == null || neighbor.Type == BlockType.Air)
+							AddQuad(ref vertices, globalPosition, Facing.Front);
+						
+						// -Y
+						neighborPosition = globalPosition + new Vector3i(0, -1, 0);
+						neighbor = world.GetBlock(neighborPosition);
+						if (neighbor == null || neighbor.Type == BlockType.Air)
+							AddQuad(ref vertices, globalPosition, Facing.Down);
+						
+						// +Y
+						neighborPosition = globalPosition + new Vector3i(0, 1, 0);
+						neighbor = world.GetBlock(neighborPosition);
+						if (neighbor == null || neighbor.Type == BlockType.Air)
+							AddQuad(ref vertices, globalPosition, Facing.Up);
 					}
 				}
 			}
@@ -78,95 +78,95 @@ public class WorldRenderer
 		}
 	}
 
-	private void AddQuad(ref List<float> vertices, Vector3 position, Vector3i direction)
+	private void AddQuad(ref List<float> vertices, Vector3 position, Facing facing)
 	{
-		switch (direction)
+		switch (facing)
 		{
 			// -X
-			case (-1, 0, 0):
+			case Facing.Left:
 			{
 				vertices.AddRange([
-					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y - 0.5f, position.Z + 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f
+					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y - 0.5f, position.Z + 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 0.0f, 0.0f, 0xFFFFFFFF
 				]);
 
 				break;
 			}
 
 			// +X
-			case (1, 0, 0):
+			case Facing.Right:
 			{
 				vertices.AddRange([
-					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f
+					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 0xFFFFFFFF
 				]);
 
 				break;
 			}
 
 			// -Z
-			case (0, 0, -1):
+			case Facing.Back:
 			{
 				vertices.AddRange([
-					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f
+					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF
 				]);
 
 				break;
 			}
 
 			// +Z
-			case (0, 0, 1):
+			case Facing.Front:
 			{
 				vertices.AddRange([
-					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f
+					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 1.0f, 1.0f, 0xFFFFFFFF
 				]);
 
 				break;
 			}
 
 			// -Y
-			case (0, -1, 0):
+			case Facing.Down:
 			{
 				vertices.AddRange([
-					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f
+					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF
 				]);
 
 				break;
 			}
 
 			// +Y
-			case (0, 1, 0):
+			case Facing.Up:
 			{
 				vertices.AddRange([
-					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f
+					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
+					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
+					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF
 				]);
 
 				break;

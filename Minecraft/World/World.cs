@@ -8,9 +8,9 @@ public class World
 	
 	public void Generate()
 	{
-		for (int x = 0; x < 3; x++)
+		for (int x = 0; x < 1; x++)
 		{
-			for (int z = 0; z < 3; z++)
+			for (int z = 0; z < 1; z++)
 			{
 				Vector3i position = new Vector3i(x, 0, z);
 				
