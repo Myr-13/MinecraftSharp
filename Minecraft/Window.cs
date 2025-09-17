@@ -20,6 +20,7 @@ public class Window : GameWindow
 		base.OnLoad();
 		
 		GL.Enable(EnableCap.CullFace);
+		GL.Enable(EnableCap.DepthTest);
 		
 		// ImGui
 		ImGui.CreateContext();

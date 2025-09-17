@@ -1,226 +1,209 @@
 ﻿using System;
 using System.Collections.Generic;
 using OpenTK.Mathematics;
+using Minecraft.World;
 
 namespace Minecraft.Graphics;
 
 public class GreedyMeshing
 {
-    private readonly List<float> _vertices;
-    private readonly Vector3i _basePosition;
-    private readonly Vector3i _faceDirection;
-    private readonly int _dimX;
-    private readonly int _dimY;
+	private readonly List<float> _vertices;
+	private readonly Vector3i _chunkBase;
+	private readonly Facing _facing;
+	private readonly Func<Vector3i, int, int, Vector3i> _rectBasePosMapper;
+	private readonly int _dimX;
+	private readonly int _dimY;
 
-    public GreedyMeshing(bool[,] grid, int dimX, int dimY, List<float> vertices, Vector3i basePosition, Vector3i faceDirection)
-    {
-        _vertices = vertices;
-        _basePosition = basePosition;
-        _faceDirection = faceDirection;
-        _dimX = dimX;
-        _dimY = dimY;
+	public GreedyMeshing(
+		bool[,] grid,
+		int dimX,
+		int dimY,
+		List<float> vertices,
+		Vector3i chunkBase,
+		Facing facing,
+		Func<Vector3i, int, int, Vector3i> rectBasePosMapper)
+	{
+		_vertices = vertices;
+		_chunkBase = chunkBase;
+		_facing = facing;
+		_rectBasePosMapper = rectBasePosMapper;
+		_dimX = dimX;
+		_dimY = dimY;
 
-        uint[] binaryArray = new uint[dimY];
-        bool[,] visited = new bool[dimY, dimX];
+		uint[] binaryArray = new uint[dimY];
+		bool[,] visited = new bool[dimY, dimX];
 
-        // Заполняем битовые строки
-        for (int x = 0; x < dimY; x++)
-        {
-            uint a = 0;
-            for (int y = 0; y < dimX; y++)
-            {
-                if (grid[x, y])
-                    a |= 1u << y;
-            }
-            binaryArray[x] = a;
-        }
+		// Заполняем битовые строки
+		for (int x = 0; x < dimY; x++)
+		{
+			uint a = 0;
+			for (int y = 0; y < dimX; y++)
+			{
+				if (grid[x, y])
+					a |= 1u << y;
+			}
 
-        // Проходим по сетке и генерируем прямоугольники
-        for (int x = 0; x < dimY; x++)
-        {
-            uint a = binaryArray[x];
-            int i = 0;
+			binaryArray[x] = a;
+		}
 
-            while (i < dimX)
-            {
-                if (visited[x, i])
-                {
-                    i++;
-                    continue;
-                }
+		// Обрабатываем строки
+		for (int x = 0; x < dimY; x++)
+		{
+			uint a = binaryArray[x];
+			int i = 0;
 
-                if ((a & (1u << i)) != 0)
-                {
-                    int startX = x;
-                    int startY = i;
+			while (i < dimX)
+			{
+				if (visited[x, i])
+				{
+					i++;
+					continue;
+				}
 
-                    // Ширина
-                    int width = 0;
-                    while (i + width < dimX && (a & (1u << (i + width))) != 0 && !visited[x, i + width])
-                        width++;
+				if ((a & (1u << i)) != 0)
+				{
+					int startX = x;
+					int startY = i;
 
-                    if (width == 0)
-                    {
-                        i++;
-                        continue;
-                    }
+					// Ширина
+					int width = 0;
+					while (i + width < dimX && (a & (1u << (i + width))) != 0 && !visited[x, i + width])
+						width++;
 
-                    // Высота
-                    int height = 1;
-                    while (startX + height < dimY)
-                    {
-                        bool allMatch = true;
-                        uint nextRow = binaryArray[startX + height];
-                        for (int w = 0; w < width; w++)
-                        {
-                            if ((nextRow & (1u << (i + w))) == 0 || visited[startX + height, i + w])
-                            {
-                                allMatch = false;
-                                break;
-                            }
-                        }
-                        if (!allMatch) break;
-                        height++;
-                    }
+					if (width == 0)
+					{
+						i++;
+						continue;
+					}
 
-                    // Генерируем вершины для прямоугольника
-                    GenerateQuadVertices(startX, startY, width, height);
+					// Высота
+					int height = 1;
+					while (startX + height < dimY)
+					{
+						bool allMatch = true;
+						uint nextRow = binaryArray[startX + height];
+						for (int w = 0; w < width; w++)
+						{
+							if ((nextRow & (1u << (i + w))) == 0 || visited[startX + height, i + w])
+							{
+								allMatch = false;
+								break;
+							}
+						}
 
-                    // Помечаем как посещённые
-                    for (int h = 0; h < height; h++)
-                    {
-                        for (int w = 0; w < width; w++)
-                        {
-                            visited[startX + h, i + w] = true;
-                        }
-                    }
+						if (!allMatch) break;
+						height++;
+					}
 
-                    i += width;
-                }
-                else
-                {
-                    i++;
-                }
-            }
-        }
-    }
+					// Генерируем прямоугольник
+					GenerateQuad(startX, startY, width, height);
 
-    private void GenerateQuadVertices(int gridX, int gridY, int width, int height)
-    {
-        // Определяем локальную позицию прямоугольника в пространстве
-        Vector3 startPos = _basePosition + new Vector3(gridY, gridX, 0); // gridY → X, gridX → Y в плоскости грани
+					// Помечаем как посещённые
+					for (int h = 0; h < height; h++)
+					{
+						for (int w = 0; w < width; w++)
+						{
+							visited[startX + h, i + w] = true;
+						}
+					}
 
-        // Для каждой грани — разная ориентация
-        switch (_faceDirection)
-        {
-            case (0, 1, 0): // +Y (верх)
-                AddQuad(_vertices, startPos, _faceDirection, width, height);
-                break;
+					i += width;
+				}
+				else
+				{
+					i++;
+				}
+			}
+		}
+	}
 
-            case (0, -1, 0): // -Y (низ)
-                AddQuad(_vertices, startPos, _faceDirection, width, height);
-                break;
+	private void GenerateQuad(int gridX, int gridY, int width, int height)
+	{
+		Vector3 basePos = _rectBasePosMapper(_chunkBase, gridY, gridX);
+		AddQuad(_vertices, basePos, _facing, width, height);
+	}
 
-            case (1, 0, 0): // +X
-                AddQuad(_vertices, startPos, _faceDirection, width, height);
-                break;
+	private static void AddQuad(List<float> vertices, Vector3 basePos, Facing facing, int width, int height)
+	{
+		float x = basePos.X;
+		float y = basePos.Y;
+		float z = basePos.Z;
 
-            case (-1, 0, 0): // -X
-                AddQuad(_vertices, startPos, _faceDirection, width, height);
-                break;
+		uint color = 0xFFFFFFFF;
 
-            case (0, 0, 1): // +Z
-                AddQuad(_vertices, startPos, _faceDirection, width, height);
-                break;
+		switch (facing)
+		{
+			case Facing.Left: // -X
+				vertices.AddRange([
+					x - 0.5f, y - 0.5f, z - 0.5f, 0.0f, 1.0f, color,
+					x - 0.5f, y - 0.5f, z + width - 0.5f, 1.0f, 1.0f, color,
+					x - 0.5f, y + height - 0.5f, z + width - 0.5f, 1.0f, 0.0f, color,
 
-            case (0, 0, -1): // -Z
-                AddQuad(_vertices, startPos, _faceDirection, width, height);
-                break;
-        }
-    }
+					x - 0.5f, y - 0.5f, z - 0.5f, 0.0f, 1.0f, color,
+					x - 0.5f, y + height - 0.5f, z + width - 0.5f, 1.0f, 0.0f, color,
+					x - 0.5f, y + height - 0.5f, z - 0.5f, 0.0f, 0.0f, color
+				]);
+				break;
 
-    private static void AddQuad(List<float> vertices, Vector3 basePos, Vector3i direction, int width, int height)
-    {
-        float x = basePos.X;
-        float y = basePos.Y;
-        float z = basePos.Z;
+			case Facing.Right: // +X
+				vertices.AddRange([
+					x + 0.5f, y + height - 0.5f, z + width - 0.5f, 0.0f, 0.0f, color,
+					x + 0.5f, y - 0.5f, z - 0.5f, 1.0f, 1.0f, color,
+					x + 0.5f, y + height - 0.5f, z - 0.5f, 1.0f, 0.0f, color,
 
-        float w = width;
-        float h = height;
+					x + 0.5f, y - 0.5f, z - 0.5f, 1.0f, 1.0f, color,
+					x + 0.5f, y + height - 0.5f, z + width - 0.5f, 0.0f, 0.0f, color,
+					x + 0.5f, y - 0.5f, z + width - 0.5f, 0.0f, 1.0f, color
+				]);
+				break;
 
-        switch (direction)
-        {
-            case (-1, 0, 0): // -X
-                vertices.AddRange([
-                    x - 0.5f, y - 0.5f, z - 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y - 0.5f, z + w - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y + h - 0.5f, z + w - 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+			case Facing.Back: // -Z
+				vertices.AddRange([
+					x + width - 0.5f, y + height - 0.5f, z - 0.5f, 0.0f, 0.0f, color,
+					x - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 1.0f, color,
+					x - 0.5f, y + height - 0.5f, z - 0.5f, 1.0f, 0.0f, color,
 
-                    x - 0.5f, y - 0.5f, z - 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y + h - 0.5f, z + w - 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y + h - 0.5f, z - 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f
-                ]);
-                break;
+					x + width - 0.5f, y + height - 0.5f, z - 0.5f, 0.0f, 0.0f, color,
+					x + width - 0.5f, y - 0.5f, z - 0.5f, 0.0f, 1.0f, color,
+					x - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 1.0f, color
+				]);
+				break;
 
-            case (1, 0, 0): // +X
-                vertices.AddRange([
-                    x + w - 0.5f, y + h - 0.5f, z + w - 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                    x + w - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                    x + w - 0.5f, y + h - 0.5f, z - 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+			case Facing.Front: // +Z
+				vertices.AddRange([
+					x - 0.5f, y + height - 0.5f, z + 0.5f, 0.0f, 0.0f, color,
+					x - 0.5f, y - 0.5f, z + 0.5f, 0.0f, 1.0f, color,
+					x + width - 0.5f, y - 0.5f, z + 0.5f, 1.0f, 1.0f, color,
 
-                    x + w - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                    x + w - 0.5f, y + h - 0.5f, z + w - 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                    x + w - 0.5f, y - 0.5f, z + w - 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f
-                ]);
-                break;
+					x + width - 0.5f, y + height - 0.5f, z + 0.5f, 1.0f, 0.0f, color,
+					x - 0.5f, y + height - 0.5f, z + 0.5f, 0.0f, 0.0f, color,
+					x + width - 0.5f, y - 0.5f, z + 0.5f, 1.0f, 1.0f, color
+				]);
+				break;
 
-            case (0, 0, -1): // -Z
-                vertices.AddRange([
-                    x + w - 0.5f, y + h - 0.5f, z - 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y + h - 0.5f, z - 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
+			case Facing.Down: // -Y
+				vertices.AddRange([
+					x + width - 0.5f, y - 0.5f, z + width - 0.5f, 0.0f, 0.0f, color,
+					x - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 1.0f, color,
+					x + width - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 0.0f, color,
 
-                    x + w - 0.5f, y + h - 0.5f, z - 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                    x + w - 0.5f, y - 0.5f, z - 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f
-                ]);
-                break;
+					x + width - 0.5f, y - 0.5f, z + width - 0.5f, 0.0f, 0.0f, color,
+					x - 0.5f, y - 0.5f, z + width - 0.5f, 0.0f, 1.0f, color,
+					x - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 1.0f, color
+				]);
+				break;
 
-            case (0, 0, 1): // +Z
-                vertices.AddRange([
-                    x - 0.5f, y + h - 0.5f, z + w - 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y - 0.5f, z + w - 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                    x + w - 0.5f, y - 0.5f, z + w - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
+			case Facing.Up: // +Y
+				vertices.AddRange([
+					x + width - 0.5f, y + 0.5f, z + width - 0.5f, 0.0f, 1.0f, color,
+					x + width - 0.5f, y + 0.5f, z - 0.5f, 1.0f, 1.0f, color,
+					x - 0.5f, y + 0.5f, z - 0.5f, 1.0f, 0.0f, color,
 
-                    x + w - 0.5f, y + h - 0.5f, z + w - 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y + h - 0.5f, z + w - 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                    x + w - 0.5f, y - 0.5f, z + w - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f
-                ]);
-                break;
-
-            case (0, -1, 0): // -Y
-                vertices.AddRange([
-                    x + w - 0.5f, y - 0.5f, z + w - 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                    x + w - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-
-                    x + w - 0.5f, y - 0.5f, z + w - 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y - 0.5f, z + w - 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y - 0.5f, z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f
-                ]);
-                break;
-
-            case (0, 1, 0): // +Y
-                vertices.AddRange([
-                    x + w - 0.5f, y + h - 0.5f, z + w - 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                    x + w - 0.5f, y + h - 0.5f, z - 0.5f, 1.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y + h - 0.5f, z - 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-
-                    x + w - 0.5f, y + h - 0.5f, z + w - 0.5f, 0.0f, 1.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y + h - 0.5f, z - 0.5f, 1.0f, 0.0f, 1.0f, 1.0f, 1.0f,
-                    x - 0.5f, y + h - 0.5f, z + w - 0.5f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f
-                ]);
-                break;
-        }
-    }
+					x + width - 0.5f, y + 0.5f, z + width - 0.5f, 0.0f, 1.0f, color,
+					x - 0.5f, y + 0.5f, z - 0.5f, 1.0f, 0.0f, color,
+					x - 0.5f, y + 0.5f, z + width - 0.5f, 0.0f, 0.0f, color
+				]);
+				break;
+		}
+	}
 }

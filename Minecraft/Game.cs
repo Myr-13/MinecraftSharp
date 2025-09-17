@@ -27,7 +27,7 @@ public class Game
     public void Run()
     {
         _shader.Create("data/shaders/vert.vert", "data/shaders/frag.frag");
-        _texture.Create("data/textures/stone.png");
+        _texture.Create("data/textures/minecraft.png");
         _world.Generate();
         _worldRenderer.RebuildMesh(_world);
     }
@@ -40,33 +40,7 @@ public class Game
 
     public void OnRender()
     {
-        long vertCount = _worldRenderer.VerticesCount;
-        long bytes = vertCount * 8 * sizeof(float);
-
-        // Update fps every 0.1 second
-        if (_lastFpsUpdate + 1_000_000 < DateTime.Now.Ticks)
-        {
-            _lastFpsUpdate = DateTime.Now.Ticks;
-            _lastFps = (int)Math.Round(1.0 / _window.UpdateTime);
-        }
-        
-        ImGui.Begin("Main");
-        ImGui.Text($"Camera: {_camera.Position.X:F2} {_camera.Position.Y:F2} {_camera.Position.Z:F2}");
-        ImGui.Text($"Vertices: {vertCount} Triangles: {vertCount / 3}");
-        ImGui.Text($"Allocated: {bytes / 1024.0:F1} KiB");
-        ImGui.Text($"FPS: {_lastFps}");
-        
-        if (ImGui.Checkbox("Wireframe", ref _wireframe))
-            GL.PolygonMode(TriangleFace.FrontAndBack, _wireframe ? PolygonMode.Line : PolygonMode.Fill);
-            
-        if (ImGui.Checkbox("Face culling", ref _faceCulling))
-        {
-            if (_faceCulling)
-                GL.Enable(EnableCap.CullFace);
-            else
-                GL.Disable(EnableCap.CullFace);
-        }
-        ImGui.End();
+        RenderUi();
         
         _texture.Use();
         _shader.Use();
@@ -87,14 +61,56 @@ public class Game
             _camera.Move(-_camera.Right * 1000.0f * deltaTime);
         if (ImGui.IsKeyDown(ImGuiKey.D))
             _camera.Move(_camera.Right * 1000.0f * deltaTime);
+        if (ImGui.IsKeyDown(ImGuiKey.Space))
+            _camera.Move(_camera.Up * 1000.0f * deltaTime);
+        if (ImGui.IsKeyDown(ImGuiKey.LeftShift))
+            _camera.Move(-_camera.Up * 1000.0f * deltaTime);
         
         if (ImGui.IsKeyDown(ImGuiKey.UpArrow))
-            _camera.ProcessMouseMovement(0.0f, 1000.0f * deltaTime);
+            _camera.ProcessMouseMovement(0.0f, 2000.0f * deltaTime);
         if (ImGui.IsKeyDown(ImGuiKey.DownArrow))
-            _camera.ProcessMouseMovement(0.0f, -1000.0f * deltaTime);
+            _camera.ProcessMouseMovement(0.0f, -2000.0f * deltaTime);
         if (ImGui.IsKeyDown(ImGuiKey.LeftArrow))
-            _camera.ProcessMouseMovement(1000.0f * deltaTime, 0.0f);
+            _camera.ProcessMouseMovement(2000.0f * deltaTime, 0.0f);
         if (ImGui.IsKeyDown(ImGuiKey.RightArrow))
-            _camera.ProcessMouseMovement(-1000.0f * deltaTime, 0.0f);
+            _camera.ProcessMouseMovement(-2000.0f * deltaTime, 0.0f);
+    }
+
+    private void RenderUi()
+    {
+        // Game Ui
+        ImGui.Begin("Game");
+        ImGui.Text($"Camera: {_camera.Position.X:F2} {_camera.Position.Y:F2} {_camera.Position.Z:F2}");
+        ImGui.Text($"Rotation: {_camera.Yaw % 360.0:F2} {_camera.Pitch % 360.0:F2}");
+        ImGui.InputFloat("Camera speed", ref _camera.MovementSpeed);
+        ImGui.End();
+        
+        // Graphics Ui
+        // Update fps every 0.1 second
+        if (_lastFpsUpdate + 1_000_000 < DateTime.Now.Ticks)
+        {
+            _lastFpsUpdate = DateTime.Now.Ticks;
+            _lastFps = (int)Math.Round(1.0 / _window.UpdateTime);
+        }
+        
+        long vertCount = _worldRenderer.VerticesCount;
+        long bytes = vertCount * 9 * sizeof(float);
+        
+        ImGui.Begin("Graphics");
+        ImGui.Text($"Vertices: {vertCount} Triangles: {vertCount / 3}");
+        ImGui.Text($"Allocated: {bytes / 1024.0:F1} KiB");
+        ImGui.Text($"FPS: {_lastFps}");
+        
+        if (ImGui.Checkbox("Wireframe", ref _wireframe))
+            GL.PolygonMode(TriangleFace.FrontAndBack, _wireframe ? PolygonMode.Line : PolygonMode.Fill);
+            
+        if (ImGui.Checkbox("Face culling", ref _faceCulling))
+        {
+            if (_faceCulling)
+                GL.Enable(EnableCap.CullFace);
+            else
+                GL.Disable(EnableCap.CullFace);
+        }
+        ImGui.End();
     }
 }

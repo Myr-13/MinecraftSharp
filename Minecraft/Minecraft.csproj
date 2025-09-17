@@ -19,6 +19,7 @@
       <PackageReference Include="ImGui.NET" Version="1.91.6.1" />
       <PackageReference Include="OpenTK" Version="5.0.0-pre.15" />
       <PackageReference Include="StbImageSharp" Version="2.30.15" />
+      <PackageReference Include="t4ccer.Noisy" Version="1.2.0" />
     </ItemGroup>
 
 </Project>

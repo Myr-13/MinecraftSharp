@@ -1,4 +1,6 @@
-﻿using OpenTK.Mathematics;
+﻿using Minecraft.World.Blocks;
+using OpenTK.Mathematics;
+using t4ccer.Noisy;
 
 namespace Minecraft.World;
 
@@ -13,22 +15,29 @@ public class Chunk
 
 	public void Generate(Vector3i position)
 	{
-		Random random = new Random(1 + position.X * 100 + position.Y * 10 + position.Z);
+		var noise = new OpenSimplexNoise3DGenerator(1);
 		
-		for (int i = 0; i < SizeX * SizeY * SizeZ; i++)
+		for (int x = 0; x < SizeX; x++)
 		{
-			Blocks[i] = new()
+			for (int y = 0; y < SizeY; y++)
 			{
-				// Type = (BlockType)random.Next(0, (int)BlockType.Count)
-				Type = BlockType.Stone
-			};
+				for (int z = 0; z < SizeZ; z++)
+				{
+					float noiseX = position.X * SizeX + x;
+					float noiseY = position.Y * SizeY + y;
+					float noiseZ = position.Z * SizeZ + z;
+					if (noise.At(noiseX / SizeX, noiseY / SizeY, noiseZ / SizeZ) < 0.3f)
+						continue;
+					Blocks[x + y * SizeX + z * SizeX * SizeY] = new Stone();
+				}
+			}
 		}
 	}
 
 	public Block GetBlock(Vector3i position)
 	{
 		// x + (y * WIDTH) + (z * WIDTH * HEIGHT)
-		return Blocks[position.X + (position.Y + SizeX) + (position.Z * SizeX * SizeY)];
+		return Blocks[position.X + position.Y * SizeX + position.Z * SizeX * SizeY];
 	}
 
 	public static bool IsInBounds(Vector3i position)

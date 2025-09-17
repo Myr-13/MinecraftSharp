@@ -6,7 +6,7 @@ public class Mesh
 {
 	private int _vbo;
 	private int _vao;
-	private int _verticesCount;
+	public int VerticesCount { get; private set; }
 
 	public void Create(float[] vertices)
 	{
@@ -17,26 +17,30 @@ public class Mesh
 		_vao = GL.GenVertexArray();
 		GL.BindVertexArray(_vao);
 
-		// Позиция (3 float)
+		// Position (3 float)
 		GL.EnableVertexAttribArray(0);
-		GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 6 * sizeof(float), 0);
+		GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 9 * sizeof(float), 0);
 
-		// Текстурные координаты (2 float)
+		// Texture UV (2 float)
 		GL.EnableVertexAttribArray(1);
-		GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 6 * sizeof(float), 3 * sizeof(float));
+		GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 9 * sizeof(float), 3 * sizeof(float));
 		
-		// Текстурные координаты (1 uint)
+		// BlockId (1 float)
 		GL.EnableVertexAttribArray(2);
-		GL.VertexAttribPointer(2, 1, VertexAttribPointerType.UnsignedInt, false, 6 * sizeof(float), 5 * sizeof(float));
+		GL.VertexAttribPointer(2, 1, VertexAttribPointerType.Float, false, 9 * sizeof(float), 5 * sizeof(float));
+		
+		// Color (3 float)
+		GL.EnableVertexAttribArray(3);
+		GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, 9 * sizeof(float), 6 * sizeof(float));
 
 		GL.BindVertexArray(0);
 
-		_verticesCount = vertices.Length / 6;
+		VerticesCount = vertices.Length / 9;
 	}
 
 	public void Render()
 	{
 		GL.BindVertexArray(_vao);
-		GL.DrawArrays(PrimitiveType.Triangles, 0, _verticesCount);
+		GL.DrawArrays(PrimitiveType.Triangles, 0, VerticesCount);
 	}
 }

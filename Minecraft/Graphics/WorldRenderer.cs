@@ -33,37 +33,37 @@ public class WorldRenderer
 						Vector3i neighborPosition = globalPosition + new Vector3i(-1, 0, 0);
 						Block? neighbor = world.GetBlock(neighborPosition);
 						if (neighbor == null || neighbor.Type == BlockType.Air)
-							AddQuad(ref vertices, globalPosition, Facing.Left);
+							AddQuad(ref vertices, globalPosition, Facing.Left, currentBlock);
 						
 						// +X
 						neighborPosition = globalPosition + new Vector3i(1, 0, 0);
 						neighbor = world.GetBlock(neighborPosition);
 						if (neighbor == null || neighbor.Type == BlockType.Air)
-							AddQuad(ref vertices, globalPosition, Facing.Right);
+							AddQuad(ref vertices, globalPosition, Facing.Right, currentBlock);
 						
 						// -Z
 						neighborPosition = globalPosition + new Vector3i(0, 0, -1);
 						neighbor = world.GetBlock(neighborPosition);
 						if (neighbor == null || neighbor.Type == BlockType.Air)
-							AddQuad(ref vertices, globalPosition, Facing.Back);
+							AddQuad(ref vertices, globalPosition, Facing.Back, currentBlock);
 						
 						// +Z
 						neighborPosition = globalPosition + new Vector3i(0, 0, 1);
 						neighbor = world.GetBlock(neighborPosition);
 						if (neighbor == null || neighbor.Type == BlockType.Air)
-							AddQuad(ref vertices, globalPosition, Facing.Front);
+							AddQuad(ref vertices, globalPosition, Facing.Front, currentBlock);
 						
 						// -Y
 						neighborPosition = globalPosition + new Vector3i(0, -1, 0);
 						neighbor = world.GetBlock(neighborPosition);
 						if (neighbor == null || neighbor.Type == BlockType.Air)
-							AddQuad(ref vertices, globalPosition, Facing.Down);
+							AddQuad(ref vertices, globalPosition, Facing.Down, currentBlock);
 						
 						// +Y
 						neighborPosition = globalPosition + new Vector3i(0, 1, 0);
 						neighbor = world.GetBlock(neighborPosition);
 						if (neighbor == null || neighbor.Type == BlockType.Air)
-							AddQuad(ref vertices, globalPosition, Facing.Up);
+							AddQuad(ref vertices, globalPosition, Facing.Up, currentBlock);
 					}
 				}
 			}
@@ -73,27 +73,28 @@ public class WorldRenderer
 				Mesh mesh = new Mesh();
 				mesh.Create(vertices.ToArray());
 				_meshes.Add(mesh);
-				VerticesCount += vertices.Count / 8;
+				VerticesCount += mesh.VerticesCount;
 			}
 		}
 	}
 
-	private void AddQuad(ref List<float> vertices, Vector3 position, Facing facing)
+	private void AddQuad(ref List<float> vertices, Vector3 position, Facing facing, Block block)
 	{
+		int faceTexture = (int)block.Facing[(int)facing];
+		
 		switch (facing)
 		{
 			// -X
 			case Facing.Left:
 			{
 				vertices.AddRange([
-					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y - 0.5f, position.Z + 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 0.0f, 0.0f, 0xFFFFFFFF
+					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y - 0.5f, position.Z + 0.5f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
 				]);
-
 				break;
 			}
 
@@ -101,12 +102,12 @@ public class WorldRenderer
 			case Facing.Right:
 			{
 				vertices.AddRange([
-					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 0xFFFFFFFF
+					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
 				]);
 
 				break;
@@ -116,12 +117,12 @@ public class WorldRenderer
 			case Facing.Back:
 			{
 				vertices.AddRange([
-					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF
+					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
 				]);
 
 				break;
@@ -131,12 +132,12 @@ public class WorldRenderer
 			case Facing.Front:
 			{
 				vertices.AddRange([
-					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 1.0f, 1.0f, 0xFFFFFFFF
+					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
 				]);
 
 				break;
@@ -146,12 +147,12 @@ public class WorldRenderer
 			case Facing.Down:
 			{
 				vertices.AddRange([
-					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF
+					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y - 0.5f, position.Z + 0.5f, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y - 0.5f, position.Z - 0.5f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
 				]);
 
 				break;
@@ -161,12 +162,12 @@ public class WorldRenderer
 			case Facing.Up:
 			{
 				vertices.AddRange([
-					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 1.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
-					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 1.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, 0xFFFFFFFF,
-					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, 0xFFFFFFFF
+					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X + 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y + 0.5f, position.Z - 0.5f, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+					position.X - 0.5f, position.Y + 0.5f, position.Z + 0.5f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
 				]);
 
 				break;
