@@ -1,6 +1,7 @@
 ﻿using ImGuiNET;
 using Minecraft.Graphics;
 using OpenTK.Graphics.OpenGL;
+using OpenTK.Mathematics;
 
 namespace Minecraft;
 
@@ -62,9 +63,9 @@ public class Game
         if (ImGui.IsKeyDown(ImGuiKey.D))
             _camera.Move(_camera.Right * 1000.0f * deltaTime);
         if (ImGui.IsKeyDown(ImGuiKey.Space))
-            _camera.Move(_camera.Up * 1000.0f * deltaTime);
+            _camera.Move(Vector3.UnitY * 1000.0f * deltaTime);
         if (ImGui.IsKeyDown(ImGuiKey.LeftShift))
-            _camera.Move(-_camera.Up * 1000.0f * deltaTime);
+            _camera.Move(-Vector3.UnitY * 1000.0f * deltaTime);
         
         if (ImGui.IsKeyDown(ImGuiKey.UpArrow))
             _camera.ProcessMouseMovement(0.0f, 2000.0f * deltaTime);

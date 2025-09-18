@@ -4,7 +4,7 @@ namespace Minecraft;
 
 public class Camera
 {
-    public Vector3 Position { get; set; } = new Vector3(2, 40, 2);
+    public Vector3 Position { get; set; } = new Vector3(0, 0, 1);
     public Vector3 Front { get; private set; } = -Vector3.UnitZ;
     public Vector3 Up { get; private set; } = Vector3.UnitY;
     public Vector3 Right { get; private set; } = Vector3.UnitX;
