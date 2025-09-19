@@ -2,6 +2,8 @@
 
 namespace Minecraft;
 
+public delegate void OnCameraMovementHandler();
+
 public class Camera
 {
     public Vector3 Position { get; set; } = new Vector3(0, 0, 1);
@@ -15,7 +17,9 @@ public class Camera
     public float Yaw { get; private set; }
     public float Pitch { get; private set; }
     public float MovementSpeed = 0.02f;
-    private float _mouseSensitivity = 0.1f;
+    private float _mouseSensitivity = 1.0f;
+    
+    public event OnCameraMovementHandler OnCameraMovement;
 
     public Camera(int width, int height)
     {
@@ -59,6 +63,8 @@ public class Camera
     {
         Position += direction * MovementSpeed;
         UpdateViewMatrix();
+        
+        OnCameraMovement.Invoke();
     }
 
     public void Rotate(Vector3 rotationDelta)

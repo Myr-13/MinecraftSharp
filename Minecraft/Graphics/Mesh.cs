@@ -42,6 +42,12 @@ public class Mesh
 		VerticesCount = vertices.Length / 11;
 	}
 
+	public void Delete()
+	{
+		GL.DeleteBuffer(_vbo);
+		GL.DeleteVertexArray(_vao);
+	}
+
 	public void Render()
 	{
 		GL.BindVertexArray(_vao);

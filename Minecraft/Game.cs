@@ -12,9 +12,9 @@ public class Game
 
     private Shader _shader = new();
     private Texture _texture = new();
-    private World.World _world = new();
     private WorldRenderer _worldRenderer = new();
-    
+    private World.World _world;
+
     private bool _wireframe = false;
     private bool _faceCulling = true;
     private long _lastFpsUpdate;
@@ -22,6 +22,7 @@ public class Game
 
     public Game(Window window)
     {
+        _world = new(_worldRenderer);
         _window = window;
     }
     
@@ -31,8 +32,9 @@ public class Game
         
         _shader.Create("data/shaders/vert.vert", "data/shaders/frag.frag");
         _texture.Create("data/textures/minecraft.png");
-        _world.Generate();
-        _worldRenderer.RebuildMesh(_world);
+        _world.CheckAndGenerateNewChunk(Vector3.One);
+
+        _camera.OnCameraMovement += () => _world.CheckAndGenerateNewChunk(_camera.Position);
     }
 
     public void Shutdown()
@@ -70,13 +72,13 @@ public class Game
             _camera.Move(-Vector3.UnitY * 1000.0f * deltaTime);
         
         if (ImGui.IsKeyDown(ImGuiKey.UpArrow))
-            _camera.ProcessMouseMovement(0.0f, 2000.0f * deltaTime);
+            _camera.ProcessMouseMovement(0.0f, 200.0f * deltaTime);
         if (ImGui.IsKeyDown(ImGuiKey.DownArrow))
-            _camera.ProcessMouseMovement(0.0f, -2000.0f * deltaTime);
+            _camera.ProcessMouseMovement(0.0f, -200.0f * deltaTime);
         if (ImGui.IsKeyDown(ImGuiKey.LeftArrow))
-            _camera.ProcessMouseMovement(2000.0f * deltaTime, 0.0f);
+            _camera.ProcessMouseMovement(200.0f * deltaTime, 0.0f);
         if (ImGui.IsKeyDown(ImGuiKey.RightArrow))
-            _camera.ProcessMouseMovement(-2000.0f * deltaTime, 0.0f);
+            _camera.ProcessMouseMovement(-200.0f * deltaTime, 0.0f);
     }
 
     private void RenderUi()
@@ -86,6 +88,7 @@ public class Game
         ImGui.Text($"Camera: {_camera.Position.X:F2} {_camera.Position.Y:F2} {_camera.Position.Z:F2}");
         ImGui.Text($"Rotation: {_camera.Yaw % 360.0:F2} {_camera.Pitch % 360.0:F2}");
         ImGui.InputFloat("Camera speed", ref _camera.MovementSpeed);
+        ImGui.Text($"Chunks count: {_world.Chunks.Count}");
         ImGui.End();
         
         // Graphics Ui

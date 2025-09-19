@@ -1,24 +1,19 @@
-﻿using OpenTK.Mathematics;
+﻿using Minecraft.Graphics;
+using OpenTK.Mathematics;
 
 namespace Minecraft.World;
 
-public class World
+public class World(WorldRenderer worldRenderer)
 {
 	public Dictionary<Vector3i, Chunk> Chunks = new();
-	
-	public void Generate()
+	private Vector3i _oldCameraPosition = Vector3i.Zero;
+	private WorldRenderer _worldRenderer = worldRenderer;
+
+	private void GenerateChunk(Vector3i chunkPosition)
 	{
-		for (int x = 0; x < 1; x++)
-		{
-			for (int z = 0; z < 1; z++)
-			{
-				Vector3i position = new Vector3i(x, 0, z);
-				
-				Chunk chunk = new();
-				chunk.Generate(position);
-				Chunks[position] = chunk;
-			}
-		}
+		Chunk chunk = new();
+		chunk.Generate(chunkPosition);
+		Chunks[chunkPosition] = chunk;
 	}
 	
 	public BlockType GetBlock(Vector3i position)
@@ -46,5 +41,29 @@ public class World
 		}
     
 		return Chunks[chunkPos].GetBlock(localPos);
+	}
+
+	public void CheckAndGenerateNewChunk(Vector3 position)
+	{
+		Vector3i cameraChunkPosition = new Vector3i(
+			(int)(position.X / Chunk.SizeX),
+			(int)(position.Y / Chunk.SizeY),
+			(int)(position.Z / Chunk.SizeZ));
+
+		if (_oldCameraPosition == cameraChunkPosition) return;
+		_oldCameraPosition = cameraChunkPosition;
+
+		for (int x = -3; x <= 3; x++)
+		{
+			for (int z = -3; z <= 3; z++)
+			{
+				Vector3i chunkPosition = cameraChunkPosition + new Vector3i(x, 0, z);
+				if (Chunks.ContainsKey(chunkPosition))
+					continue;
+				
+				GenerateChunk(chunkPosition);
+				_worldRenderer.RebuildChunkMesh(this, chunkPosition);
+			}
+		}
 	}
 }
