@@ -6,247 +6,556 @@ namespace Minecraft.Graphics;
 
 public class WorldRenderer
 {
-	private List<Mesh> _meshes = [];
-	public long VerticesCount { get; private set; }
+    private List<Mesh> _meshes = [];
+    public long VerticesCount { get; private set; }
 
-	private struct Face
-	{
-		public required Facing Facing;
-		public required Block Block;
-	}
+    public void RebuildMesh(World.World world)
+    {
+        _meshes.Clear();
+        VerticesCount = 0;
 
-	public void RebuildMesh(World.World world)
-	{
-		_meshes.Clear();
-		VerticesCount = 0;
+        foreach (var entry in world.Chunks)
+        {
+            Vector3i chunkPosition = entry.Key;
+            List<float> vertices = [];
+            Dictionary<Vector3i, Dictionary<Facing, Block>> facesList = new();
 
-		foreach (var entry in world.Chunks)
-		{
-			Vector3i chunkPosition = entry.Key;
-			List<float> vertices = [];
-			Dictionary<Vector3i, List<Face>> facesList = new();
+            for (int x = 0; x < Chunk.SizeX; x++)
+            {
+                for (int y = 0; y < Chunk.SizeY; y++)
+                {
+                    for (int z = 0; z < Chunk.SizeZ; z++)
+                    {
+                        Vector3i globalPosition = chunkPosition * Chunk.ChunkSize + new Vector3i(x, y, z);
+                        Block? currentBlock = world.GetBlock(globalPosition);
+                        if (currentBlock == null || currentBlock.Type == BlockType.Air)
+                            continue;
 
-			for (int x = 0; x < Chunk.SizeX; x++)
-			{
-				for (int y = 0; y < Chunk.SizeY; y++)
-				{
-					for (int z = 0; z < Chunk.SizeZ; z++)
-					{
-						Vector3i globalPosition = chunkPosition * Chunk.ChunkSize + new Vector3i(x, y, z);
-						Block? currentBlock = world.GetBlock(globalPosition);
-						if (currentBlock == null || currentBlock.Type == BlockType.Air)
-							continue;
+                        Dictionary<Facing, Block> faces = [];
 
-						List<Face> faces = [];
+                        // -X
+                        Vector3i neighborPosition = globalPosition + new Vector3i(-1, 0, 0);
+                        Block? neighbor = world.GetBlock(neighborPosition);
+                        if (neighbor == null || neighbor.Type == BlockType.Air)
+                            faces[Facing.Left] = currentBlock;
+                        
+                        // +X
+                        neighborPosition = globalPosition + new Vector3i(1, 0, 0);
+                        neighbor = world.GetBlock(neighborPosition);
+                        if (neighbor == null || neighbor.Type == BlockType.Air)
+                            faces[Facing.Right] = currentBlock;
+                        
+                        // -Z
+                        neighborPosition = globalPosition + new Vector3i(0, 0, -1);
+                        neighbor = world.GetBlock(neighborPosition);
+                        if (neighbor == null || neighbor.Type == BlockType.Air)
+                            faces[Facing.Back] = currentBlock;
+                        
+                        // +Z
+                        neighborPosition = globalPosition + new Vector3i(0, 0, 1);
+                        neighbor = world.GetBlock(neighborPosition);
+                        if (neighbor == null || neighbor.Type == BlockType.Air)
+                            faces[Facing.Front] = currentBlock;
+                        
+                        // -Y
+                        neighborPosition = globalPosition + new Vector3i(0, -1, 0);
+                        neighbor = world.GetBlock(neighborPosition);
+                        if (neighbor == null || neighbor.Type == BlockType.Air)
+                            faces[Facing.Down] = currentBlock;
+                        
+                        // +Y
+                        neighborPosition = globalPosition + new Vector3i(0, 1, 0);
+                        neighbor = world.GetBlock(neighborPosition);
+                        if (neighbor == null || neighbor.Type == BlockType.Air)
+                            faces[Facing.Up] = currentBlock;
 
-						// -X
-						Vector3i neighborPosition = globalPosition + new Vector3i(-1, 0, 0);
-						Block? neighbor = world.GetBlock(neighborPosition);
-						if (neighbor == null || neighbor.Type == BlockType.Air)
-							faces.Add(new Face { Facing = Facing.Left, Block = currentBlock });
-						
-						// +X
-						neighborPosition = globalPosition + new Vector3i(1, 0, 0);
-						neighbor = world.GetBlock(neighborPosition);
-						if (neighbor == null || neighbor.Type == BlockType.Air)
-							faces.Add(new Face { Facing = Facing.Right, Block = currentBlock });
-						
-						// -Z
-						neighborPosition = globalPosition + new Vector3i(0, 0, -1);
-						neighbor = world.GetBlock(neighborPosition);
-						if (neighbor == null || neighbor.Type == BlockType.Air)
-							faces.Add(new Face { Facing = Facing.Back, Block = currentBlock });
-						
-						// +Z
-						neighborPosition = globalPosition + new Vector3i(0, 0, 1);
-						neighbor = world.GetBlock(neighborPosition);
-						if (neighbor == null || neighbor.Type == BlockType.Air)
-							faces.Add(new Face { Facing = Facing.Front, Block = currentBlock });
-						
-						// -Y
-						neighborPosition = globalPosition + new Vector3i(0, -1, 0);
-						neighbor = world.GetBlock(neighborPosition);
-						if (neighbor == null || neighbor.Type == BlockType.Air)
-							faces.Add(new Face { Facing = Facing.Down, Block = currentBlock });
-						
-						// +Y
-						neighborPosition = globalPosition + new Vector3i(0, 1, 0);
-						neighbor = world.GetBlock(neighborPosition);
-						if (neighbor == null || neighbor.Type == BlockType.Air)
-							faces.Add(new Face { Facing = Facing.Up, Block = currentBlock });
+                        facesList[globalPosition] = faces;
+                    }
+                }
+            }
 
-						facesList[globalPosition] = faces;
-					}
-				}
-			}
+            // Создаем копию для безопасного перебора
+            var facesListCopy = new Dictionary<Vector3i, Dictionary<Facing, Block>>(facesList);
+            
+            foreach (var faceEntry in facesListCopy)
+            {
+                Vector3i facePosition = faceEntry.Key;
+                
+                // Создаем копию для безопасного перебора граней
+                var facesCopy = new Dictionary<Facing, Block>(faceEntry.Value);
+                
+                foreach (var face in facesCopy)
+                {
+                    // Проверяем, не была ли грань уже удалена при объединении
+                    if (!facesList.TryGetValue(facePosition, out var currentFaces) || 
+                        !currentFaces.ContainsKey(face.Key))
+                        continue;
+                    
+                    switch (face.Key)
+                    {
+                        case Facing.Up:
+                        {
+                            int w = 1;
+                            int h = 1;
+                            
+                            // Проверяем, можем ли расширить по ширине (X)
+                            while (true)
+                            {
+                                Vector3i testPos = facePosition + new Vector3i(w, 0, 0);
+                                if (!facesList.TryGetValue(testPos, out var testFaces) || 
+                                    !testFaces.ContainsKey(Facing.Up))
+                                    break;
+                                
+                                w++;
+                                if (w >= Chunk.SizeX)
+                                    break;
+                            }
 
-			foreach (var faceEntry in facesList)
-			{
-				Vector3i facePosition = faceEntry.Key;
-				
-				foreach (Face face in faceEntry.Value)
-				{
-					if (face.Facing == Facing.Up)
-					{
-						Vector3i next = facePosition + new Vector3i(1, 0, 0);
-						int w = 1;
-						int h = 1;
+                            // Проверяем, можем ли расширить по высоте (Z)
+                            bool canGrowHeight;
+                            do
+                            {
+                                canGrowHeight = true;
+                                for (int i = 0; i < w; i++)
+                                {
+                                    Vector3i testPos = facePosition + new Vector3i(i, 0, h);
+                                    if (!facesList.TryGetValue(testPos, out var testFaces) || 
+                                        !testFaces.ContainsKey(Facing.Up))
+                                    {
+                                        canGrowHeight = false;
+                                        break;
+                                    }
+                                }
+                                
+                                if (canGrowHeight)
+                                    h++;
+                                
+                            } while (canGrowHeight && h < Chunk.SizeZ);
 
-						// Grow by width
-						while (facesList.Remove(next))
-						{
-							next.X += 1;
-							w++;
-						}
+                            // Удаляем обработанные грани
+                            for (int i = 0; i < h; i++)
+                            {
+                                for (int j = 0; j < w; j++)
+                                {
+                                    Vector3i pos = facePosition + new Vector3i(j, 0, i);
+                                    if (facesList.TryGetValue(pos, out var posFaces))
+                                    {
+                                        posFaces.Remove(Facing.Up);
+                                        if (posFaces.Count == 0)
+                                            facesList.Remove(pos);
+                                    }
+                                }
+                            }
+                        
+                            AddQuad(ref vertices, facePosition, new Vector2i(w, h), face.Key, face.Value);
+                            break;
+                        }
 
-						// Grow by height
-						while (true)
-						{
-							bool brk = false;
-							for (int i = 0; i < w; i++)
-							{
-								next = facePosition + new Vector3i(i, 0, h);
-								if (!facesList.ContainsKey(next))
-								{
-									brk = true;
-									break;
-								}
-							}
-							
-							if (brk)
-								break;
-							
-							h++;
-							
-							if (h >= Chunk.SizeZ)
-								break;
-						}
+                        case Facing.Down:
+                        {
+                            int w = 1;
+                            int h = 1;
+                            
+                            // Проверяем, можем ли расширить по ширине (X)
+                            while (true)
+                            {
+                                Vector3i testPos = facePosition + new Vector3i(w, 0, 0);
+                                if (!facesList.TryGetValue(testPos, out var testFaces) || 
+                                    !testFaces.ContainsKey(Facing.Down))
+                                    break;
+                                
+                                w++;
+                                if (w >= Chunk.SizeX)
+                                    break;
+                            }
 
-						for (int i = 0; i < h; i++)
-						{
-							for (int j = 0; j < w; j++)
-							{
-								facesList.Remove(facePosition + new Vector3i(j, 0, i));
-							}
-						}
-						
-						AddQuad(ref vertices, facePosition, new Vector2i(w, h), face.Facing, face.Block);
-					}
-				}
-			}
+                            // Проверяем, можем ли расширить по высоте (Z)
+                            bool canGrowHeight;
+                            do
+                            {
+                                canGrowHeight = true;
+                                for (int i = 0; i < w; i++)
+                                {
+                                    Vector3i testPos = facePosition + new Vector3i(i, 0, h);
+                                    if (!facesList.TryGetValue(testPos, out var testFaces) || 
+                                        !testFaces.ContainsKey(Facing.Down))
+                                    {
+                                        canGrowHeight = false;
+                                        break;
+                                    }
+                                }
+                                
+                                if (canGrowHeight)
+                                    h++;
+                                
+                            } while (canGrowHeight && h < Chunk.SizeZ);
 
-			if (vertices.Count > 0)
-			{
-				Mesh mesh = new Mesh();
-				mesh.Create(vertices.ToArray());
-				_meshes.Add(mesh);
-				VerticesCount += mesh.VerticesCount;
-			}
-		}
-	}
+                            // Удаляем обработанные грани
+                            for (int i = 0; i < h; i++)
+                            {
+                                for (int j = 0; j < w; j++)
+                                {
+                                    Vector3i pos = facePosition + new Vector3i(j, 0, i);
+                                    if (facesList.TryGetValue(pos, out var posFaces))
+                                    {
+                                        posFaces.Remove(Facing.Down);
+                                        if (posFaces.Count == 0)
+                                            facesList.Remove(pos);
+                                    }
+                                }
+                            }
+                        
+                            AddQuad(ref vertices, facePosition, new Vector2i(w, h), face.Key, face.Value);
+                            break;
+                        }
 
-	private void AddQuad(ref List<float> vertices, Vector3 position, Vector2i size, Facing facing, Block block)
-	{
-		int faceTexture = (int)block.Facing[(int)facing];
-		
-		switch (facing)
-		{
-			// -X
-			case Facing.Left:
-			{
-				vertices.AddRange([
-					position.X, position.Y,          position.Z,          0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X, position.Y,          position.Z + size.X, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X, position.Y + size.Y, position.Z + size.X, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X, position.Y,          position.Z,          0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X, position.Y + size.Y, position.Z + size.X, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X, position.Y + size.Y, position.Z,          0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-				]);
-				break;
-			}
+                        case Facing.Left:
+                        {
+                            int w = 1;
+                            int h = 1;
+                            
+                            // Проверяем, можем ли расширить по ширине (Z)
+                            while (true)
+                            {
+                                Vector3i testPos = facePosition + new Vector3i(0, 0, w);
+                                if (!facesList.TryGetValue(testPos, out var testFaces) || 
+                                    !testFaces.ContainsKey(Facing.Left))
+                                    break;
+                                
+                                w++;
+                                if (w >= Chunk.SizeZ)
+                                    break;
+                            }
 
-			// +X
-			case Facing.Right:
-			{
-				vertices.AddRange([
-					position.X + 1.0f, position.Y + size.Y, position.Z + size.X, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + 1.0f, position.Y,          position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + 1.0f, position.Y + size.Y, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + 1.0f, position.Y,          position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + 1.0f, position.Y + size.Y, position.Z + size.X, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + 1.0f, position.Y,          position.Z + size.X, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-				]);
+                            // Проверяем, можем ли расширить по высоте (Y)
+                            bool canGrowHeight;
+                            do
+                            {
+                                canGrowHeight = true;
+                                for (int i = 0; i < w; i++)
+                                {
+                                    Vector3i testPos = facePosition + new Vector3i(0, h, i);
+                                    if (!facesList.TryGetValue(testPos, out var testFaces) || 
+                                        !testFaces.ContainsKey(Facing.Left))
+                                    {
+                                        canGrowHeight = false;
+                                        break;
+                                    }
+                                }
+                                
+                                if (canGrowHeight)
+                                    h++;
+                                
+                            } while (canGrowHeight && h < Chunk.SizeY);
 
-				break;
-			}
+                            // Удаляем обработанные грани
+                            for (int i = 0; i < h; i++)
+                            {
+                                for (int j = 0; j < w; j++)
+                                {
+                                    Vector3i pos = facePosition + new Vector3i(0, i, j);
+                                    if (facesList.TryGetValue(pos, out var posFaces))
+                                    {
+                                        posFaces.Remove(Facing.Left);
+                                        if (posFaces.Count == 0)
+                                            facesList.Remove(pos);
+                                    }
+                                }
+                            }
+                        
+                            AddQuad(ref vertices, facePosition, new Vector2i(w, h), face.Key, face.Value);
+                            break;
+                        }
 
-			// -Z
-			case Facing.Back:
-			{
-				vertices.AddRange([
-					position.X + size.X, position.Y + size.Y, position.Z, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X,          position.Y,          position.Z, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X,          position.Y + size.Y, position.Z, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + size.X, position.Y + size.Y, position.Z, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + size.X, position.Y,          position.Z, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X,          position.Y,          position.Z, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-				]);
+                        case Facing.Right:
+                        {
+                            int w = 1;
+                            int h = 1;
+                            
+                            // Проверяем, можем ли расширить по ширине (Z)
+                            while (true)
+                            {
+                                Vector3i testPos = facePosition + new Vector3i(0, 0, w);
+                                if (!facesList.TryGetValue(testPos, out var testFaces) || 
+                                    !testFaces.ContainsKey(Facing.Right))
+                                    break;
+                                
+                                w++;
+                                if (w >= Chunk.SizeZ)
+                                    break;
+                            }
 
-				break;
-			}
+                            // Проверяем, можем ли расширить по высоте (Y)
+                            bool canGrowHeight;
+                            do
+                            {
+                                canGrowHeight = true;
+                                for (int i = 0; i < w; i++)
+                                {
+                                    Vector3i testPos = facePosition + new Vector3i(0, h, i);
+                                    if (!facesList.TryGetValue(testPos, out var testFaces) || 
+                                        !testFaces.ContainsKey(Facing.Right))
+                                    {
+                                        canGrowHeight = false;
+                                        break;
+                                    }
+                                }
+                                
+                                if (canGrowHeight)
+                                    h++;
+                                
+                            } while (canGrowHeight && h < Chunk.SizeY);
 
-			// +Z
-			case Facing.Front:
-			{
-				vertices.AddRange([
-					position.X,          position.Y + size.Y, position.Z + 1.0f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X,          position.Y,          position.Z + 1.0f, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + size.X, position.Y,          position.Z + 1.0f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + size.X, position.Y + size.Y, position.Z + 1.0f, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X,          position.Y + size.Y, position.Z + 1.0f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + size.X, position.Y,          position.Z + 1.0f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-				]);
+                            // Удаляем обработанные грани
+                            for (int i = 0; i < h; i++)
+                            {
+                                for (int j = 0; j < w; j++)
+                                {
+                                    Vector3i pos = facePosition + new Vector3i(0, i, j);
+                                    if (facesList.TryGetValue(pos, out var posFaces))
+                                    {
+                                        posFaces.Remove(Facing.Right);
+                                        if (posFaces.Count == 0)
+                                            facesList.Remove(pos);
+                                    }
+                                }
+                            }
+                        
+                            AddQuad(ref vertices, facePosition, new Vector2i(w, h), face.Key, face.Value);
+                            break;
+                        }
 
-				break;
-			}
+                        case Facing.Back:
+                        {
+                            int w = 1;
+                            int h = 1;
+                            
+                            // Проверяем, можем ли расширить по ширине (X)
+                            while (true)
+                            {
+                                Vector3i testPos = facePosition + new Vector3i(w, 0, 0);
+                                if (!facesList.TryGetValue(testPos, out var testFaces) || 
+                                    !testFaces.ContainsKey(Facing.Back))
+                                    break;
+                                
+                                w++;
+                                if (w >= Chunk.SizeX)
+                                    break;
+                            }
 
-			// -Y
-			case Facing.Down:
-			{
-				vertices.AddRange([
-					position.X + size.Y, position.Y, position.Z + size.X, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X,          position.Y, position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + size.Y, position.Y, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + size.Y, position.Y, position.Z + size.X, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X,          position.Y, position.Z + size.X, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X,          position.Y, position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-				]);
+                            // Проверяем, можем ли расширить по высоте (Y)
+                            bool canGrowHeight;
+                            do
+                            {
+                                canGrowHeight = true;
+                                for (int i = 0; i < w; i++)
+                                {
+                                    Vector3i testPos = facePosition + new Vector3i(i, h, 0);
+                                    if (!facesList.TryGetValue(testPos, out var testFaces) || 
+                                        !testFaces.ContainsKey(Facing.Back))
+                                    {
+                                        canGrowHeight = false;
+                                        break;
+                                    }
+                                }
+                                
+                                if (canGrowHeight)
+                                    h++;
+                                
+                            } while (canGrowHeight && h < Chunk.SizeY);
 
-				break;
-			}
+                            // Удаляем обработанные грани
+                            for (int i = 0; i < h; i++)
+                            {
+                                for (int j = 0; j < w; j++)
+                                {
+                                    Vector3i pos = facePosition + new Vector3i(j, i, 0);
+                                    if (facesList.TryGetValue(pos, out var posFaces))
+                                    {
+                                        posFaces.Remove(Facing.Back);
+                                        if (posFaces.Count == 0)
+                                            facesList.Remove(pos);
+                                    }
+                                }
+                            }
+                        
+                            AddQuad(ref vertices, facePosition, new Vector2i(w, h), face.Key, face.Value);
+                            break;
+                        }
 
-			// +Y
-			case Facing.Up:
-			{
-				vertices.AddRange([
-					position.X + size.X, position.Y + 1.0f, position.Z + size.Y, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + size.X, position.Y + 1.0f, position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X,          position.Y + 1.0f, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X + size.X, position.Y + 1.0f, position.Z + size.Y, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X,          position.Y + 1.0f, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-					position.X,          position.Y + 1.0f, position.Z + size.Y, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-				]);
+                        case Facing.Front:
+                        {
+                            int w = 1;
+                            int h = 1;
+                            
+                            // Проверяем, можем ли расширить по ширине (X)
+                            while (true)
+                            {
+                                Vector3i testPos = facePosition + new Vector3i(w, 0, 0);
+                                if (!facesList.TryGetValue(testPos, out var testFaces) || 
+                                    !testFaces.ContainsKey(Facing.Front))
+                                    break;
+                                
+                                w++;
+                                if (w >= Chunk.SizeX)
+                                    break;
+                            }
 
-				break;
-			}
-		}
-	}
+                            // Проверяем, можем ли расширить по высоте (Y)
+                            bool canGrowHeight;
+                            do
+                            {
+                                canGrowHeight = true;
+                                for (int i = 0; i < w; i++)
+                                {
+                                    Vector3i testPos = facePosition + new Vector3i(i, h, 0);
+                                    if (!facesList.TryGetValue(testPos, out var testFaces) || 
+                                        !testFaces.ContainsKey(Facing.Front))
+                                    {
+                                        canGrowHeight = false;
+                                        break;
+                                    }
+                                }
+                                
+                                if (canGrowHeight)
+                                    h++;
+                                
+                            } while (canGrowHeight && h < Chunk.SizeY);
 
-	public void Render()
-	{
-		foreach (var mesh in _meshes)
-		{
-			mesh.Render();
-		}
-	}
+                            // Удаляем обработанные грани
+                            for (int i = 0; i < h; i++)
+                            {
+                                for (int j = 0; j < w; j++)
+                                {
+                                    Vector3i pos = facePosition + new Vector3i(j, i, 0);
+                                    if (facesList.TryGetValue(pos, out var posFaces))
+                                    {
+                                        posFaces.Remove(Facing.Front);
+                                        if (posFaces.Count == 0)
+                                            facesList.Remove(pos);
+                                    }
+                                }
+                            }
+                        
+                            AddQuad(ref vertices, facePosition, new Vector2i(w, h), face.Key, face.Value);
+                            break;
+                        }
+                    }
+                }
+            }
+
+            if (vertices.Count > 0)
+            {
+                Mesh mesh = new Mesh();
+                mesh.Create(vertices.ToArray());
+                _meshes.Add(mesh);
+                VerticesCount += mesh.VerticesCount;
+            }
+        }
+    }
+
+    private void AddQuad(ref List<float> vertices, Vector3 position, Vector2i size, Facing facing, Block block)
+    {
+        int faceTexture = (int)block.Facing[(int)facing];
+        
+        switch (facing)
+        {
+            // -X
+            case Facing.Left:
+            {
+                vertices.AddRange([
+                    position.X, position.Y,          position.Z,          0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X, position.Y,          position.Z + size.X, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X, position.Y + size.Y, position.Z + size.X, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X, position.Y,          position.Z,          0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X, position.Y + size.Y, position.Z + size.X, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X, position.Y + size.Y, position.Z,          0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                ]);
+                break;
+            }
+
+            // +X
+            case Facing.Right:
+            {
+                vertices.AddRange([
+                    position.X + 1.0f, position.Y + size.Y, position.Z + size.X, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + 1.0f, position.Y,          position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + 1.0f, position.Y + size.Y, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + 1.0f, position.Y,          position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + 1.0f, position.Y + size.Y, position.Z + size.X, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + 1.0f, position.Y,          position.Z + size.X, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                ]);
+
+                break;
+            }
+
+            // -Z
+            case Facing.Back:
+            {
+                vertices.AddRange([
+                    position.X + size.X, position.Y + size.Y, position.Z, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X,          position.Y,          position.Z, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X,          position.Y + size.Y, position.Z, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + size.X, position.Y + size.Y, position.Z, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + size.X, position.Y,          position.Z, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X,          position.Y,          position.Z, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                ]);
+
+                break;
+            }
+
+            // +Z
+            case Facing.Front:
+            {
+                vertices.AddRange([
+                    position.X,          position.Y + size.Y, position.Z + 1.0f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X,          position.Y,          position.Z + 1.0f, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + size.X, position.Y,          position.Z + 1.0f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + size.X, position.Y + size.Y, position.Z + 1.0f, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X,          position.Y + size.Y, position.Z + 1.0f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + size.X, position.Y,          position.Z + 1.0f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                ]);
+
+                break;
+            }
+
+            // -Y
+            case Facing.Down:
+            {
+                vertices.AddRange([
+                    position.X + size.X, position.Y, position.Z + size.Y, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X,          position.Y, position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + size.X, position.Y, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + size.X, position.Y, position.Z + size.Y, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X,          position.Y, position.Z + size.Y, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X,          position.Y, position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                ]);
+
+                break;
+            }
+
+            // +Y
+            case Facing.Up:
+            {
+                vertices.AddRange([
+                    position.X + size.X, position.Y + 1.0f, position.Z + size.Y, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + size.X, position.Y + 1.0f, position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X,          position.Y + 1.0f, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + size.X, position.Y + 1.0f, position.Z + size.Y, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X,          position.Y + 1.0f, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X,          position.Y + 1.0f, position.Z + size.Y, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                ]);
+
+                break;
+            }
+        }
+    }
+
+    public void Render()
+    {
+        foreach (var mesh in _meshes)
+        {
+            mesh.Render();
+        }
+    }
 }
