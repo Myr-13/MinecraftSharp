@@ -419,7 +419,6 @@ public class WorldRenderer
                                 
                                 if (canGrowHeight)
                                     h++;
-                                
                             } while (canGrowHeight && h < Chunk.SizeY);
 
                             // Удаляем обработанные грани
@@ -464,12 +463,12 @@ public class WorldRenderer
             case Facing.Left:
             {
                 vertices.AddRange([
-                    position.X, position.Y,          position.Z,          0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X, position.Y,          position.Z + size.X, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X, position.Y + size.Y, position.Z + size.X, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X, position.Y,          position.Z,          0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X, position.Y + size.Y, position.Z + size.X, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X, position.Y + size.Y, position.Z,          0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X, position.Y,          position.Z,          0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X, position.Y,          position.Z + size.X, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X, position.Y + size.Y, position.Z + size.X, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X, position.Y,          position.Z,          0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X, position.Y + size.Y, position.Z + size.X, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X, position.Y + size.Y, position.Z,          0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
                 ]);
                 break;
             }
@@ -478,12 +477,12 @@ public class WorldRenderer
             case Facing.Right:
             {
                 vertices.AddRange([
-                    position.X + 1.0f, position.Y + size.Y, position.Z + size.X, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + 1.0f, position.Y,          position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + 1.0f, position.Y + size.Y, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + 1.0f, position.Y,          position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + 1.0f, position.Y + size.Y, position.Z + size.X, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + 1.0f, position.Y,          position.Z + size.X, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + 1.0f, position.Y + size.Y, position.Z + size.X, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X + 1.0f, position.Y,          position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X + 1.0f, position.Y + size.Y, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X + 1.0f, position.Y,          position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X + 1.0f, position.Y + size.Y, position.Z + size.X, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X + 1.0f, position.Y,          position.Z + size.X, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
                 ]);
 
                 break;
@@ -493,12 +492,12 @@ public class WorldRenderer
             case Facing.Back:
             {
                 vertices.AddRange([
-                    position.X + size.X, position.Y + size.Y, position.Z, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X,          position.Y,          position.Z, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X,          position.Y + size.Y, position.Z, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + size.X, position.Y + size.Y, position.Z, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + size.X, position.Y,          position.Z, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X,          position.Y,          position.Z, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + size.X, position.Y + size.Y, position.Z, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X,          position.Y,          position.Z, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X,          position.Y + size.Y, position.Z, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X + size.X, position.Y + size.Y, position.Z, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X + size.X, position.Y,          position.Z, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X,          position.Y,          position.Z, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
                 ]);
 
                 break;
@@ -508,12 +507,12 @@ public class WorldRenderer
             case Facing.Front:
             {
                 vertices.AddRange([
-                    position.X,          position.Y + size.Y, position.Z + 1.0f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X,          position.Y,          position.Z + 1.0f, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + size.X, position.Y,          position.Z + 1.0f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + size.X, position.Y + size.Y, position.Z + 1.0f, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X,          position.Y + size.Y, position.Z + 1.0f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + size.X, position.Y,          position.Z + 1.0f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X,          position.Y + size.Y, position.Z + 1.0f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X,          position.Y,          position.Z + 1.0f, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X + size.X, position.Y,          position.Z + 1.0f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X + size.X, position.Y + size.Y, position.Z + 1.0f, 1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X,          position.Y + size.Y, position.Z + 1.0f, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
+                    position.X + size.X, position.Y,          position.Z + 1.0f, 1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.X, size.Y,
                 ]);
 
                 break;
@@ -523,12 +522,12 @@ public class WorldRenderer
             case Facing.Down:
             {
                 vertices.AddRange([
-                    position.X + size.X, position.Y, position.Z + size.Y, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X,          position.Y, position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + size.X, position.Y, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + size.X, position.Y, position.Z + size.Y, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X,          position.Y, position.Z + size.Y, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X,          position.Y, position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + size.X, position.Y, position.Z + size.Y, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.Y, size.X,
+                    position.X,          position.Y, position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.Y, size.X,
+                    position.X + size.X, position.Y, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.Y, size.X,
+                    position.X + size.X, position.Y, position.Z + size.Y, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.Y, size.X,
+                    position.X,          position.Y, position.Z + size.Y, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.Y, size.X,
+                    position.X,          position.Y, position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.Y, size.X,
                 ]);
 
                 break;
@@ -538,12 +537,12 @@ public class WorldRenderer
             case Facing.Up:
             {
                 vertices.AddRange([
-                    position.X + size.X, position.Y + 1.0f, position.Z + size.Y, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + size.X, position.Y + 1.0f, position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X,          position.Y + 1.0f, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X + size.X, position.Y + 1.0f, position.Z + size.Y, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X,          position.Y + 1.0f, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
-                    position.X,          position.Y + 1.0f, position.Z + size.Y, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f,
+                    position.X + size.X, position.Y + 1.0f, position.Z + size.Y, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.Y, size.X,
+                    position.X + size.X, position.Y + 1.0f, position.Z,          1.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.Y, size.X,
+                    position.X,          position.Y + 1.0f, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.Y, size.X,
+                    position.X + size.X, position.Y + 1.0f, position.Z + size.Y, 0.0f, 1.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.Y, size.X,
+                    position.X,          position.Y + 1.0f, position.Z,          1.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.Y, size.X,
+                    position.X,          position.Y + 1.0f, position.Z + size.Y, 0.0f, 0.0f, faceTexture, 1.0f, 1.0f, 1.0f, size.Y, size.X,
                 ]);
 
                 break;

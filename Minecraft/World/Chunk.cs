@@ -28,7 +28,7 @@ public class Chunk
 					float noiseZ = position.Z * SizeZ + z;
 					if (noise.At(noiseX / SizeX, noiseY / SizeY, noiseZ / SizeZ) < 0.3f)
 						continue;
-					_blocks[x + y * SizeX + z * SizeX * SizeY] = BlockType.Stone;
+					_blocks[x + y * SizeX + z * SizeX * SizeY] = BlockType.Gravel;
 				}
 			}
 		}
@@ -42,7 +42,7 @@ public class Chunk
 			{
 				for (int z = 0; z < SizeZ; z++)
 				{
-					_blocks[x + y * SizeX + z * SizeX * SizeY] = BlockType.Grass;
+					_blocks[x + y * SizeX + z * SizeX * SizeY] = BlockType.Stone;
 				}
 			}
 		}

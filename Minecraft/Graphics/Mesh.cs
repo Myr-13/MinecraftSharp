@@ -19,23 +19,27 @@ public class Mesh
 
 		// Position (3 float)
 		GL.EnableVertexAttribArray(0);
-		GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 9 * sizeof(float), 0);
+		GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 11 * sizeof(float), 0);
 
 		// Texture UV (2 float)
 		GL.EnableVertexAttribArray(1);
-		GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 9 * sizeof(float), 3 * sizeof(float));
+		GL.VertexAttribPointer(1, 2, VertexAttribPointerType.Float, false, 11 * sizeof(float), 3 * sizeof(float));
 		
 		// BlockId (1 float)
 		GL.EnableVertexAttribArray(2);
-		GL.VertexAttribPointer(2, 1, VertexAttribPointerType.Float, false, 9 * sizeof(float), 5 * sizeof(float));
+		GL.VertexAttribPointer(2, 1, VertexAttribPointerType.Float, false, 11 * sizeof(float), 5 * sizeof(float));
 		
 		// Color (3 float)
 		GL.EnableVertexAttribArray(3);
-		GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, 9 * sizeof(float), 6 * sizeof(float));
+		GL.VertexAttribPointer(3, 3, VertexAttribPointerType.Float, false, 11 * sizeof(float), 6 * sizeof(float));
+		
+		// Mesh size (2 float)
+		GL.EnableVertexAttribArray(4);
+		GL.VertexAttribPointer(4, 2, VertexAttribPointerType.Float, false, 11 * sizeof(float), 9 * sizeof(float));
 
 		GL.BindVertexArray(0);
 
-		VerticesCount = vertices.Length / 9;
+		VerticesCount = vertices.Length / 11;
 	}
 
 	public void Render()
