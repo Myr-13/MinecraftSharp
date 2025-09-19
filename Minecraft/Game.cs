@@ -27,6 +27,8 @@ public class Game
     
     public void Run()
     {
+        ModelsContainer.LoadModels("data/models");
+        
         _shader.Create("data/shaders/vert.vert", "data/shaders/frag.frag");
         _texture.Create("data/textures/minecraft.png");
         _world.Generate();

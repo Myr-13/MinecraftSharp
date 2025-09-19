@@ -6,5 +6,6 @@ public enum TextureType
 	Dirt,
 	GrassSide,
 	GrassTop,
-	Planks
+	Planks,
+	Emo = 27,
 }

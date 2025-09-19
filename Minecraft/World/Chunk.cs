@@ -6,12 +6,12 @@ namespace Minecraft.World;
 
 public class Chunk
 {
-	public const int SizeX = 8;
-	public const int SizeY = 8;
-	public const int SizeZ = 8;
+	public const int SizeX = 32;
+	public const int SizeY = 32;
+	public const int SizeZ = 32;
 	public static readonly Vector3i ChunkSize = new(SizeX, SizeY, SizeZ);
 
-	private Block?[] _blocks = new Block[SizeX * SizeY * SizeZ];
+	private BlockType[] _blocks = new BlockType[SizeX * SizeY * SizeZ];
 
 	private void GenerateNoise(Vector3i position)
 	{
@@ -28,7 +28,7 @@ public class Chunk
 					float noiseZ = position.Z * SizeZ + z;
 					if (noise.At(noiseX / SizeX, noiseY / SizeY, noiseZ / SizeZ) < 0.3f)
 						continue;
-					_blocks[x + y * SizeX + z * SizeX * SizeY] = new Stone();
+					_blocks[x + y * SizeX + z * SizeX * SizeY] = BlockType.Stone;
 				}
 			}
 		}
@@ -42,7 +42,7 @@ public class Chunk
 			{
 				for (int z = 0; z < SizeZ; z++)
 				{
-					_blocks[x + y * SizeX + z * SizeX * SizeY] = new Stone();
+					_blocks[x + y * SizeX + z * SizeX * SizeY] = BlockType.Grass;
 				}
 			}
 		}
@@ -54,13 +54,12 @@ public class Chunk
 		// GenerateFill(position);
 	}
 
-	public Block? GetBlock(Vector3i position)
+	public BlockType GetBlock(Vector3i position)
 	{
-		// x + (y * WIDTH) + (z * WIDTH * HEIGHT)
 		return GetBlock(position.X, position.Y, position.Z);
 	}
 	
-	public Block? GetBlock(int x, int y, int z)
+	public BlockType GetBlock(int x, int y, int z)
 	{
 		// x + (y * WIDTH) + (z * WIDTH * HEIGHT)
 		return _blocks[x + y * SizeX + z * SizeX * SizeY];

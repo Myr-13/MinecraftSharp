@@ -21,7 +21,7 @@ public class World
 		}
 	}
 	
-	public Block? GetBlock(Vector3i position)
+	public BlockType GetBlock(Vector3i position)
 	{
 		Vector3i chunkPos = new Vector3i(
 			(int)Math.Floor((double)position.X / Chunk.SizeX),
@@ -30,7 +30,7 @@ public class World
 		);
     
 		if (!Chunks.ContainsKey(chunkPos))
-			return null;
+			return BlockType.Air;
     
 		Vector3i localPos = new Vector3i(
 			position.X - chunkPos.X * Chunk.SizeX,
@@ -42,7 +42,7 @@ public class World
 		    localPos.Y < 0 || localPos.Y >= Chunk.SizeY ||
 		    localPos.Z < 0 || localPos.Z >= Chunk.SizeZ)
 		{
-			return null;
+			return BlockType.Air;
 		}
     
 		return Chunks[chunkPos].GetBlock(localPos);

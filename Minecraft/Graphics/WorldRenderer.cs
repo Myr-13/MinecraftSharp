@@ -18,7 +18,7 @@ public class WorldRenderer
         {
             Vector3i chunkPosition = entry.Key;
             List<float> vertices = [];
-            Dictionary<Vector3i, Dictionary<Facing, Block>> facesList = new();
+            Dictionary<Vector3i, Dictionary<Facing, BlockType>> facesList = new();
 
             for (int x = 0; x < Chunk.SizeX; x++)
             {
@@ -27,47 +27,47 @@ public class WorldRenderer
                     for (int z = 0; z < Chunk.SizeZ; z++)
                     {
                         Vector3i globalPosition = chunkPosition * Chunk.ChunkSize + new Vector3i(x, y, z);
-                        Block? currentBlock = world.GetBlock(globalPosition);
-                        if (currentBlock == null || currentBlock.Type == BlockType.Air)
+                        BlockType currentBlockType = world.GetBlock(globalPosition);
+                        if (currentBlockType == BlockType.Air)
                             continue;
 
-                        Dictionary<Facing, Block> faces = [];
+                        Dictionary<Facing, BlockType> faces = [];
 
                         // -X
                         Vector3i neighborPosition = globalPosition + new Vector3i(-1, 0, 0);
-                        Block? neighbor = world.GetBlock(neighborPosition);
-                        if (neighbor == null || neighbor.Type == BlockType.Air)
-                            faces[Facing.Left] = currentBlock;
+                        BlockType neighborBlockType = world.GetBlock(neighborPosition);
+                        if (neighborBlockType == BlockType.Air)
+                            faces[Facing.Left] = currentBlockType;
                         
                         // +X
                         neighborPosition = globalPosition + new Vector3i(1, 0, 0);
-                        neighbor = world.GetBlock(neighborPosition);
-                        if (neighbor == null || neighbor.Type == BlockType.Air)
-                            faces[Facing.Right] = currentBlock;
+                        neighborBlockType = world.GetBlock(neighborPosition);
+                        if (neighborBlockType == BlockType.Air)
+                            faces[Facing.Right] = currentBlockType;
                         
                         // -Z
                         neighborPosition = globalPosition + new Vector3i(0, 0, -1);
-                        neighbor = world.GetBlock(neighborPosition);
-                        if (neighbor == null || neighbor.Type == BlockType.Air)
-                            faces[Facing.Back] = currentBlock;
+                        neighborBlockType = world.GetBlock(neighborPosition);
+                        if (neighborBlockType == BlockType.Air)
+                            faces[Facing.Back] = currentBlockType;
                         
                         // +Z
                         neighborPosition = globalPosition + new Vector3i(0, 0, 1);
-                        neighbor = world.GetBlock(neighborPosition);
-                        if (neighbor == null || neighbor.Type == BlockType.Air)
-                            faces[Facing.Front] = currentBlock;
+                        neighborBlockType = world.GetBlock(neighborPosition);
+                        if (neighborBlockType == BlockType.Air)
+                            faces[Facing.Front] = currentBlockType;
                         
                         // -Y
                         neighborPosition = globalPosition + new Vector3i(0, -1, 0);
-                        neighbor = world.GetBlock(neighborPosition);
-                        if (neighbor == null || neighbor.Type == BlockType.Air)
-                            faces[Facing.Down] = currentBlock;
+                        neighborBlockType = world.GetBlock(neighborPosition);
+                        if (neighborBlockType == BlockType.Air)
+                            faces[Facing.Down] = currentBlockType;
                         
                         // +Y
                         neighborPosition = globalPosition + new Vector3i(0, 1, 0);
-                        neighbor = world.GetBlock(neighborPosition);
-                        if (neighbor == null || neighbor.Type == BlockType.Air)
-                            faces[Facing.Up] = currentBlock;
+                        neighborBlockType = world.GetBlock(neighborPosition);
+                        if (neighborBlockType == BlockType.Air)
+                            faces[Facing.Up] = currentBlockType;
 
                         facesList[globalPosition] = faces;
                     }
@@ -75,14 +75,14 @@ public class WorldRenderer
             }
 
             // Создаем копию для безопасного перебора
-            var facesListCopy = new Dictionary<Vector3i, Dictionary<Facing, Block>>(facesList);
+            var facesListCopy = new Dictionary<Vector3i, Dictionary<Facing, BlockType>>(facesList);
             
             foreach (var faceEntry in facesListCopy)
             {
                 Vector3i facePosition = faceEntry.Key;
                 
                 // Создаем копию для безопасного перебора граней
-                var facesCopy = new Dictionary<Facing, Block>(faceEntry.Value);
+                var facesCopy = new Dictionary<Facing, BlockType>(faceEntry.Value);
                 
                 foreach (var face in facesCopy)
                 {
@@ -454,9 +454,9 @@ public class WorldRenderer
         }
     }
 
-    private void AddQuad(ref List<float> vertices, Vector3 position, Vector2i size, Facing facing, Block block)
+    private void AddQuad(ref List<float> vertices, Vector3 position, Vector2i size, Facing facing, BlockType blockType)
     {
-        int faceTexture = (int)block.Facing[(int)facing];
+        float faceTexture = ModelsContainer.Blocks[blockType][facing];
         
         switch (facing)
         {
