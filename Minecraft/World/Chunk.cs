@@ -42,7 +42,7 @@ public class Chunk
 			{
 				for (int z = 0; z < SizeZ; z++)
 				{
-					_blocks[x + y * SizeX + z * SizeX * SizeY] = BlockType.Stone;
+					_blocks[x + y * SizeX + z * SizeX * SizeY] = BlockType.Gravel;
 				}
 			}
 		}
@@ -50,8 +50,8 @@ public class Chunk
 
 	public void Generate(Vector3i position)
 	{
-		GenerateNoise(position);
-		// GenerateFill(position);
+		// GenerateNoise(position);
+		GenerateFill(position);
 	}
 
 	public BlockType GetBlock(Vector3i position)
@@ -63,6 +63,16 @@ public class Chunk
 	{
 		// x + (y * WIDTH) + (z * WIDTH * HEIGHT)
 		return _blocks[x + y * SizeX + z * SizeX * SizeY];
+	}
+
+	public void SetBlock(Vector3i position, BlockType block)
+	{
+		SetBlock(position.X, position.Y, position.Z, block);
+	}
+
+	public void SetBlock(int x, int y, int z, BlockType block)
+	{
+		_blocks[x + y * SizeX + z * SizeX * SizeY] = block;
 	}
 
 	public static bool IsInBounds(Vector3i position)
