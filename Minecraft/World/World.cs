@@ -1,4 +1,5 @@
-﻿using Minecraft.Graphics;
+﻿using System.Diagnostics;
+using Minecraft.Graphics;
 using OpenTK.Mathematics;
 
 namespace Minecraft.World;
@@ -61,7 +62,11 @@ public class World(WorldRenderer worldRenderer)
 		}
     
 		Chunks[chunkPos].SetBlock(localPos, block);
+		Stopwatch sw = new();
+		sw.Start();
 		_worldRenderer.RebuildChunkMesh(this, chunkPos);
+		sw.Stop();
+		Console.WriteLine(sw.Elapsed.Milliseconds);
 	}
 
 	public void CheckAndGenerateNewChunk(Vector3 position)

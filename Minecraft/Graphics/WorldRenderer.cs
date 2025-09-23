@@ -13,6 +13,7 @@ public class WorldRenderer
 	{
 		if (_meshes.ContainsKey(chunkPosition))
 		{
+			VerticesCount -= _meshes[chunkPosition].VerticesCount;
 			_meshes[chunkPosition].Delete();
 			_meshes.Remove(chunkPosition);
 		}
@@ -88,7 +89,7 @@ public class WorldRenderer
 			{
 				// Проверяем, не была ли грань уже удалена при объединении
 				if (!facesList.TryGetValue(facePosition, out var currentFaces) ||
-				    !currentFaces.ContainsKey(face.Key))
+					!currentFaces.ContainsKey(face.Key))
 					continue;
 
 				switch (face.Key)
@@ -98,20 +99,18 @@ public class WorldRenderer
 						int w = 1;
 						int h = 1;
 
-						// Проверяем, можем ли расширить по ширине (X)
-						while (true)
+						// Расширение по X (ширина)
+						while (w < Chunk.SizeX)
 						{
 							Vector3i testPos = facePosition + new Vector3i(w, 0, 0);
 							if (!facesList.TryGetValue(testPos, out var testFaces) ||
-							    !testFaces.ContainsKey(Facing.Up))
+								!testFaces.ContainsKey(Facing.Up) ||
+								testFaces[Facing.Up] != face.Value)
 								break;
-
 							w++;
-							if (w >= Chunk.SizeX)
-								break;
 						}
 
-						// Проверяем, можем ли расширить по высоте (Z)
+						// Расширение по Z (высота)
 						bool canGrowHeight;
 						do
 						{
@@ -120,7 +119,8 @@ public class WorldRenderer
 							{
 								Vector3i testPos = facePosition + new Vector3i(i, 0, h);
 								if (!facesList.TryGetValue(testPos, out var testFaces) ||
-								    !testFaces.ContainsKey(Facing.Up))
+									!testFaces.ContainsKey(Facing.Up) ||
+									testFaces[Facing.Up] != face.Value)
 								{
 									canGrowHeight = false;
 									break;
@@ -155,20 +155,18 @@ public class WorldRenderer
 						int w = 1;
 						int h = 1;
 
-						// Проверяем, можем ли расширить по ширине (X)
-						while (true)
+						// Расширение по X (ширина)
+						while (w < Chunk.SizeX)
 						{
 							Vector3i testPos = facePosition + new Vector3i(w, 0, 0);
 							if (!facesList.TryGetValue(testPos, out var testFaces) ||
-							    !testFaces.ContainsKey(Facing.Down))
+								!testFaces.ContainsKey(Facing.Down) ||
+								testFaces[Facing.Down] != face.Value)
 								break;
-
 							w++;
-							if (w >= Chunk.SizeX)
-								break;
 						}
 
-						// Проверяем, можем ли расширить по высоте (Z)
+						// Расширение по Z (высота)
 						bool canGrowHeight;
 						do
 						{
@@ -177,7 +175,8 @@ public class WorldRenderer
 							{
 								Vector3i testPos = facePosition + new Vector3i(i, 0, h);
 								if (!facesList.TryGetValue(testPos, out var testFaces) ||
-								    !testFaces.ContainsKey(Facing.Down))
+									!testFaces.ContainsKey(Facing.Down) ||
+									testFaces[Facing.Down] != face.Value)
 								{
 									canGrowHeight = false;
 									break;
@@ -212,20 +211,18 @@ public class WorldRenderer
 						int w = 1;
 						int h = 1;
 
-						// Проверяем, можем ли расширить по ширине (Z)
-						while (true)
+						// Расширение по Z (ширина) - правильно для левой грани
+						while (w < Chunk.SizeZ)
 						{
 							Vector3i testPos = facePosition + new Vector3i(0, 0, w);
 							if (!facesList.TryGetValue(testPos, out var testFaces) ||
-							    !testFaces.ContainsKey(Facing.Left))
+								!testFaces.ContainsKey(Facing.Left) ||
+								testFaces[Facing.Left] != face.Value)
 								break;
-
 							w++;
-							if (w >= Chunk.SizeZ)
-								break;
 						}
 
-						// Проверяем, можем ли расширить по высоте (Y)
+						// Расширение по Y (высота) - правильно для левой грани
 						bool canGrowHeight;
 						do
 						{
@@ -234,7 +231,8 @@ public class WorldRenderer
 							{
 								Vector3i testPos = facePosition + new Vector3i(0, h, i);
 								if (!facesList.TryGetValue(testPos, out var testFaces) ||
-								    !testFaces.ContainsKey(Facing.Left))
+									!testFaces.ContainsKey(Facing.Left) ||
+									testFaces[Facing.Left] != face.Value)
 								{
 									canGrowHeight = false;
 									break;
@@ -269,20 +267,18 @@ public class WorldRenderer
 						int w = 1;
 						int h = 1;
 
-						// Проверяем, можем ли расширить по ширине (Z)
-						while (true)
+						// Расширение по Z (ширина) - правильно для правой грани
+						while (w < Chunk.SizeZ)
 						{
 							Vector3i testPos = facePosition + new Vector3i(0, 0, w);
 							if (!facesList.TryGetValue(testPos, out var testFaces) ||
-							    !testFaces.ContainsKey(Facing.Right))
+								!testFaces.ContainsKey(Facing.Right) ||
+								testFaces[Facing.Right] != face.Value)
 								break;
-
 							w++;
-							if (w >= Chunk.SizeZ)
-								break;
 						}
 
-						// Проверяем, можем ли расширить по высоте (Y)
+						// Расширение по Y (высота) - правильно для правой грани
 						bool canGrowHeight;
 						do
 						{
@@ -291,7 +287,8 @@ public class WorldRenderer
 							{
 								Vector3i testPos = facePosition + new Vector3i(0, h, i);
 								if (!facesList.TryGetValue(testPos, out var testFaces) ||
-								    !testFaces.ContainsKey(Facing.Right))
+									!testFaces.ContainsKey(Facing.Right) ||
+									testFaces[Facing.Right] != face.Value)
 								{
 									canGrowHeight = false;
 									break;
@@ -326,20 +323,18 @@ public class WorldRenderer
 						int w = 1;
 						int h = 1;
 
-						// Проверяем, можем ли расширить по ширине (X)
-						while (true)
+						// Расширение по X (ширина) - правильно для задней грани
+						while (w < Chunk.SizeX)
 						{
 							Vector3i testPos = facePosition + new Vector3i(w, 0, 0);
 							if (!facesList.TryGetValue(testPos, out var testFaces) ||
-							    !testFaces.ContainsKey(Facing.Back))
+								!testFaces.ContainsKey(Facing.Back) ||
+								testFaces[Facing.Back] != face.Value)
 								break;
-
 							w++;
-							if (w >= Chunk.SizeX)
-								break;
 						}
 
-						// Проверяем, можем ли расширить по высоте (Y)
+						// Расширение по Y (высота) - правильно для задней грани
 						bool canGrowHeight;
 						do
 						{
@@ -348,7 +343,8 @@ public class WorldRenderer
 							{
 								Vector3i testPos = facePosition + new Vector3i(i, h, 0);
 								if (!facesList.TryGetValue(testPos, out var testFaces) ||
-								    !testFaces.ContainsKey(Facing.Back))
+									!testFaces.ContainsKey(Facing.Back) ||
+									testFaces[Facing.Back] != face.Value)
 								{
 									canGrowHeight = false;
 									break;
@@ -383,20 +379,18 @@ public class WorldRenderer
 						int w = 1;
 						int h = 1;
 
-						// Проверяем, можем ли расширить по ширине (X)
-						while (true)
+						// Расширение по X (ширина) - правильно для передней грани
+						while (w < Chunk.SizeX)
 						{
 							Vector3i testPos = facePosition + new Vector3i(w, 0, 0);
 							if (!facesList.TryGetValue(testPos, out var testFaces) ||
-							    !testFaces.ContainsKey(Facing.Front))
+								!testFaces.ContainsKey(Facing.Front) ||
+								testFaces[Facing.Front] != face.Value)
 								break;
-
 							w++;
-							if (w >= Chunk.SizeX)
-								break;
 						}
 
-						// Проверяем, можем ли расширить по высоте (Y)
+						// Расширение по Y (высота) - правильно для передней грани
 						bool canGrowHeight;
 						do
 						{
@@ -405,7 +399,8 @@ public class WorldRenderer
 							{
 								Vector3i testPos = facePosition + new Vector3i(i, h, 0);
 								if (!facesList.TryGetValue(testPos, out var testFaces) ||
-								    !testFaces.ContainsKey(Facing.Front))
+									!testFaces.ContainsKey(Facing.Front) ||
+									testFaces[Facing.Front] != face.Value)
 								{
 									canGrowHeight = false;
 									break;
@@ -542,7 +537,7 @@ public class WorldRenderer
 
 	public void RemoveMesh(Vector3i position)
 	{
-		VerticesCount -= _meshes.Count;
+		VerticesCount -= _meshes[position].VerticesCount;
 		_meshes[position].Delete();
 		_meshes.Remove(position);
 	}

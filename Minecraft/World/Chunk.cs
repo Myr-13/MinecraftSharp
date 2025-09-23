@@ -50,8 +50,8 @@ public class Chunk
 
 	public void Generate(Vector3i position)
 	{
-		// GenerateNoise(position);
-		GenerateFill(position);
+		GenerateNoise(position);
+		// GenerateFill(position);
 	}
 
 	public BlockType GetBlock(Vector3i position)
