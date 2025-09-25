@@ -1,8 +1,12 @@
-﻿using ImGuiNET;
+﻿using System.Runtime.InteropServices;
+using ImGuiNET;
 using Minecraft.Graphics;
 using Minecraft.World;
 using OpenTK.Graphics.OpenGL;
 using OpenTK.Mathematics;
+
+using NVector2 = System.Numerics.Vector2;
+using NVector4 = System.Numerics.Vector4;
 
 namespace Minecraft;
 
@@ -12,9 +16,11 @@ public class Game
 	private Camera _camera = new(1200, 720);
 
 	private Shader _shader = new();
-	private Texture _texture = new();
 	private WorldRenderer _worldRenderer = new();
 	private World.World _world;
+
+	private BlockType _selectedBlockType = BlockType.Stone;
+	private int _textureAtlasId;
 
 	private bool _wireframe = false;
 	private bool _faceCulling = true;
@@ -30,9 +36,16 @@ public class Game
 	public void Run()
 	{
 		ModelsContainer.LoadModels("data/models");
+		int textureAtlasId = TextureContainer.AddTextureAtlas("data/textures/minecraft.png");
+
+		TextureContainer.LoadTextureFromAtlas(textureAtlasId, 176, 16, 16, 16); // Air
+		TextureContainer.LoadTextureFromAtlas(textureAtlasId, 0, 0, 16, 16); // Stone
+		TextureContainer.LoadTextureFromAtlas(textureAtlasId, 16, 0, 16, 16); // Dirt
+		TextureContainer.LoadTextureFromAtlas(textureAtlasId, 32, 0, 16, 16); // Grass
+		TextureContainer.LoadTextureFromAtlas(textureAtlasId, 48, 16, 16, 16); // Gravel
+		_textureAtlasId = TextureContainer.LoadTextureFromAtlas(textureAtlasId, 0, 0, 256, 256);
 		
-		_shader.Create("data/shaders/vert.vert", "data/shaders/frag.frag");
-		_texture.Create("data/textures/minecraft.png");
+		_shader.Create("data/shaders/block.vert", "data/shaders/block.frag");
 		_world.CheckAndGenerateNewChunk(Vector3.One);
 
 		//_camera.OnCameraMovement += () => _world.CheckAndGenerateNewChunk(_camera.Position);
@@ -42,14 +55,13 @@ public class Game
 	public void Shutdown()
 	{
 		_shader.Delete();
-		_texture.Delete();
 	}
 
 	public void OnRender()
 	{
 		RenderUi();
 		
-		_texture.Use();
+		TextureContainer.GetTexture(_textureAtlasId).Use();
 		_shader.Use();
 		_shader.SetUniform("view", _camera.View);
 		_shader.SetUniform("projection", _camera.Projection);
@@ -82,6 +94,15 @@ public class Game
 		if (ImGui.IsKeyDown(ImGuiKey.RightArrow))
 			_camera.ProcessMouseMovement(-200.0f * deltaTime, 0.0f);
 
+		if (ImGui.IsKeyDown(ImGuiKey._1))
+			_selectedBlockType = BlockType.Stone;
+		if (ImGui.IsKeyDown(ImGuiKey._2))
+			_selectedBlockType = BlockType.Dirt;
+		if (ImGui.IsKeyDown(ImGuiKey._3))
+			_selectedBlockType = BlockType.Grass;
+		if (ImGui.IsKeyDown(ImGuiKey._4))
+			_selectedBlockType = BlockType.Gravel;
+
 		if (ImGui.IsKeyPressed(ImGuiKey.E))
 		{
 			Vector3i prevBlock = new();
@@ -99,7 +120,7 @@ public class Game
 			Console.WriteLine($"Block: {blockPos}");
 			
 			if (blockPos != null)
-				_world.SetBlock(prevBlock, BlockType.Stone);
+				_world.SetBlock(prevBlock, _selectedBlockType);
 		}
 	}
 
@@ -124,6 +145,7 @@ public class Game
 		long vertCount = _worldRenderer.VerticesCount;
 		long bytes = vertCount * 9 * sizeof(float);
 		
+		// Graphics Ui
 		ImGui.Begin("Graphics");
 		ImGui.Text($"Vertices: {vertCount} Triangles: {vertCount / 3}");
 		ImGui.Text($"Allocated: {bytes / 1024.0:F1} KiB");
@@ -140,5 +162,26 @@ public class Game
 				GL.Disable(EnableCap.CullFace);
 		}
 		ImGui.End();
+		
+		// Hotbar Ui
+		{
+			ImDrawListPtr backgroundPtr = ImGui.GetBackgroundDrawList();
+			Vector2 windowSize = _window.Size;
+			NVector2 position = new NVector2(windowSize.X / 2, windowSize.Y - 64);
+
+			uint selectedColor = ImGui.ColorConvertFloat4ToU32(new NVector4(1.0f, 1.0f, 1.0f, 1.0f));
+			uint unselectedColor = ImGui.ColorConvertFloat4ToU32(new NVector4(0.2f, 0.2f, 0.2f, 1.0f));
+
+			for (int i = 1; i < (int)BlockType.Count; i++)
+			{
+				backgroundPtr.AddRect(
+					position - new NVector2(18, 18),
+					position + new NVector2(18, 18),
+					(int)_selectedBlockType == i ? selectedColor : unselectedColor,
+					0.0f, ImDrawFlags.None, 3.0f);
+				backgroundPtr.AddImage(TextureContainer.GetTexture(i).TextureId, position - new NVector2(16, 16), position + new NVector2(16, 16));
+				position.X += 48;
+			}
+		}
 	}
 }
