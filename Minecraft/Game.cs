@@ -107,7 +107,6 @@ public class Game
 		{
 			Vector3i prevBlock = new();
 			Vector3i? blockPos = _world.IntersectLine(_camera.Position, _camera.Position + _camera.Front * 10, ref prevBlock);
-			Console.WriteLine($"Block: {blockPos}");
 			
 			if (blockPos != null)
 				_world.SetBlock(blockPos.Value, BlockType.Air);
@@ -117,7 +116,6 @@ public class Game
 		{
 			Vector3i prevBlock = new();
 			Vector3i? blockPos = _world.IntersectLine(_camera.Position, _camera.Position + _camera.Front * 10, ref prevBlock);
-			Console.WriteLine($"Block: {blockPos}");
 			
 			if (blockPos != null)
 				_world.SetBlock(prevBlock, _selectedBlockType);
