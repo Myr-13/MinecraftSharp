@@ -1,25 +1,22 @@
-﻿using Minecraft.World;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 
 namespace Minecraft.Graphics;
 
 public static class ModelsContainer
 {
-	public static Dictionary<BlockType, Dictionary<Facing, int>> Blocks = new();
-	
 	public static void LoadModels(string path)
 	{
 		foreach (string fileName in Directory.GetFiles(path))
 		{
 			Console.WriteLine($"Loading {fileName}");
 			JObject obj = JObject.Parse(File.ReadAllText(fileName));
-			Dictionary<Facing, int> blockTextures = new();
+			int[] facings = new int[6];
 
-			JArray facings = (JArray)obj["facings"];
-			for (int i = 0; i < facings.Count; i++)
-				blockTextures[(Facing)i] = (int)facings[i];
+			JArray jsonFacings = (JArray)obj["facings"];
+			for (int i = 0; i < (int)Facing.Count; i++)
+				facings[i] = (int)jsonFacings[i];
 			
-			Blocks[(BlockType)(int)obj["block_type"]] = blockTextures;
+			NativeModule.SetModel((int)obj["block_type"], facings);
 		}
 	}
 }

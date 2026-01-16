@@ -12,8 +12,8 @@ public class World(WorldRenderer worldRenderer)
 
 	public void GenerateChunk(Vector3i chunkPosition)
 	{
-		Chunk chunk = new();
-		chunk.Generate(chunkPosition);
+		Chunk chunk = new(chunkPosition);
+		chunk.Generate();
 		Chunks[chunkPosition] = chunk;
 		_worldRenderer.RebuildChunkMesh(this, chunkPosition);
 	}
@@ -91,12 +91,12 @@ public class World(WorldRenderer worldRenderer)
 	public Vector3i? IntersectLine(Vector3 start, Vector3 end, ref Vector3i prevBlock)
 	{
 		Vector3 dir = (end - start).Normalized();
-		int dist = (int)Math.Floor(Vector3.Distance(start, end) * 10);
+		int dist = (int)Math.Floor(Vector3.Distance(start, end) * 50);
 
 		for (int i = 0; i < dist; i++)
 		{
 			prevBlock = MathUtils.FloorVector(start);
-			start += dir / 10;
+			start += dir / 50;
 			Vector3i blockPos = MathUtils.FloorVector(start);
 			BlockType type = GetBlock(blockPos);
 

@@ -46,10 +46,11 @@ public class Game
 		_textureAtlasId = TextureContainer.LoadTextureFromAtlas(textureAtlasId, 0, 0, 256, 256);
 		
 		_shader.Create("data/shaders/block.vert", "data/shaders/block.frag");
-		_world.CheckAndGenerateNewChunk(Vector3.One);
 
-		//_camera.OnCameraMovement += () => _world.CheckAndGenerateNewChunk(_camera.Position);
+		// _camera.OnCameraMovement += () => _world.CheckAndGenerateNewChunk(_camera.Position);
+		NativeModule.SetConstants(Chunk.SizeX, Chunk.SizeY, Chunk.SizeZ);
 		_world.GenerateChunk(Vector3i.Zero);
+		// _world.GenerateChunk(Vector3i.One);
 	}
 
 	public void Shutdown()
@@ -180,6 +181,17 @@ public class Game
 				backgroundPtr.AddImage(TextureContainer.GetTexture(i).TextureId, position - new NVector2(16, 16), position + new NVector2(16, 16));
 				position.X += 48;
 			}
+		}
+		
+		// Game UI
+		{
+			ImDrawListPtr backgroundPtr = ImGui.GetBackgroundDrawList();
+			Vector2 windowSize = _window.Size;
+			NVector2 position = new NVector2(windowSize.X / 2, windowSize.Y / 2);
+			
+			backgroundPtr.AddCircleFilled(position, 3F, UInt32.MaxValue);
+			
+			backgroundPtr.AddText(new NVector2(10, 10), UInt32.MaxValue, "E - break\nR - place\n1..4 - select block");
 		}
 	}
 }

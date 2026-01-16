@@ -1,19 +1,21 @@
-﻿using Minecraft.World.Blocks;
+﻿using Minecraft.Graphics;
+using Minecraft.World.Blocks;
 using OpenTK.Mathematics;
 using t4ccer.Noisy;
 
 namespace Minecraft.World;
 
-public class Chunk
+public class Chunk(Vector3i chunkPosition)
 {
-	public const int SizeX = 32;
-	public const int SizeY = 32;
-	public const int SizeZ = 32;
+	public const int SizeX = 4;
+	public const int SizeY = 4;
+	public const int SizeZ = 4;
 	public static readonly Vector3i ChunkSize = new(SizeX, SizeY, SizeZ);
 
-	private BlockType[] _blocks = new BlockType[SizeX * SizeY * SizeZ];
+	public BlockType[] _blocks = new BlockType[SizeX * SizeY * SizeZ];
+	public Vector3i Position = chunkPosition;
 
-	private void GenerateNoise(Vector3i position)
+	private void GenerateNoise()
 	{
 		var noise = new OpenSimplexNoise3DGenerator(1);
 		
@@ -23,9 +25,9 @@ public class Chunk
 			{
 				for (int z = 0; z < SizeZ; z++)
 				{
-					float noiseX = position.X * SizeX + x;
-					float noiseY = position.Y * SizeY + y;
-					float noiseZ = position.Z * SizeZ + z;
+					float noiseX = Position.X * SizeX + x;
+					float noiseY = Position.Y * SizeY + y;
+					float noiseZ = Position.Z * SizeZ + z;
 					if (noise.At(noiseX / SizeX, noiseY / SizeY, noiseZ / SizeZ) < 0.3f)
 						continue;
 					_blocks[x + y * SizeX + z * SizeX * SizeY] = BlockType.Gravel;
@@ -34,7 +36,7 @@ public class Chunk
 		}
 	}
 
-	private void GenerateFill(Vector3i position)
+	private void GenerateFill()
 	{
 		for (int x = 0; x < SizeX; x++)
 		{
@@ -48,10 +50,12 @@ public class Chunk
 		}
 	}
 
-	public void Generate(Vector3i position)
+	public void Generate()
 	{
-		GenerateNoise(position);
-		// GenerateFill(position);
+		// GenerateNoise();
+		GenerateFill();
+		
+		OnChunkUpdate();
 	}
 
 	public BlockType GetBlock(Vector3i position)
@@ -73,6 +77,8 @@ public class Chunk
 	public void SetBlock(int x, int y, int z, BlockType block)
 	{
 		_blocks[x + y * SizeX + z * SizeX * SizeY] = block;
+		
+		OnChunkUpdate();
 	}
 
 	public static bool IsInBounds(Vector3i position)
@@ -80,5 +86,10 @@ public class Chunk
 		return position.X >= 0 && position.X < SizeX &&
 		       position.Y >= 0 && position.Y < SizeY &&
 		       position.Z >= 0 && position.Z < SizeZ;
+	}
+
+	public void OnChunkUpdate()
+	{
+		NativeModule.SetChunk(Position, this);
 	}
 }
