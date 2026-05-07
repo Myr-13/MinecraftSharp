@@ -44,4 +44,22 @@ public class NativeModule
 		fixed (BlockType* blockType = chunk._blocks)
 			SetChunk(chunkPosition.X, chunkPosition.Y, chunkPosition.Z, (IntPtr)blockType);
 	}
+
+	public static unsafe float[] MeshChunk(Vector3i chunkPosition, BlockType[] blocks)
+	{
+		fixed (BlockType* ptr = blocks)
+			SetChunk(chunkPosition.X, chunkPosition.Y, chunkPosition.Z, (IntPtr)ptr);
+
+		float* ptrVertices = null;
+		float** ptrPtrVertices = &ptrVertices;
+		int verticesSize = 0;
+
+		GreedyMeshing(chunkPosition.X, chunkPosition.Y, chunkPosition.Z, ptrPtrVertices, &verticesSize);
+
+		float[] tmpVertices = new float[verticesSize];
+		Marshal.Copy((IntPtr)ptrVertices, tmpVertices, 0, verticesSize);
+		FreeMemory((IntPtr)ptrVertices);
+
+		return tmpVertices;
+	}
 }
