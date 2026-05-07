@@ -1,5 +1,4 @@
-﻿using Minecraft.Graphics;
-using Minecraft.World.Blocks;
+﻿using Minecraft.World.Blocks;
 using OpenTK.Mathematics;
 using t4ccer.Noisy;
 
@@ -14,6 +13,8 @@ public class Chunk(Vector3i chunkPosition)
 
 	public BlockType[] _blocks = new BlockType[SizeX * SizeY * SizeZ];
 	public Vector3i Position = chunkPosition;
+	public object Lock = new();
+	public bool Dirty { get; set; }
 
 	private void GenerateNoise()
 	{
@@ -38,24 +39,24 @@ public class Chunk(Vector3i chunkPosition)
 
 	private void GenerateFill()
 	{
-		for (int x = 0; x < SizeX; x++)
-		{
-			for (int y = 0; y < SizeY; y++)
-			{
-				for (int z = 0; z < SizeZ; z++)
-				{
-					_blocks[x + y * SizeX + z * SizeX * SizeY] = BlockType.Gravel;
-				}
-			}
-		}
+		// for (int x = 0; x < SizeX; x++)
+		// {
+		// 	for (int y = 0; y < SizeY; y++)
+		// 	{
+		// 		for (int z = 0; z < SizeZ; z++)
+		// 		{
+		// 			_blocks[x + y * SizeX + z * SizeX * SizeY] = BlockType.Stone;
+		// 		}
+		// 	}
+		// }
+
+		SetBlock(1, 1, 1, BlockType.Stone);
 	}
 
 	public void Generate()
 	{
 		// GenerateNoise();
 		GenerateFill();
-		
-		OnChunkUpdate();
 	}
 
 	public BlockType GetBlock(Vector3i position)
@@ -77,8 +78,7 @@ public class Chunk(Vector3i chunkPosition)
 	public void SetBlock(int x, int y, int z, BlockType block)
 	{
 		_blocks[x + y * SizeX + z * SizeX * SizeY] = block;
-		
-		OnChunkUpdate();
+		Dirty = true;
 	}
 
 	public static bool IsInBounds(Vector3i position)
@@ -88,8 +88,11 @@ public class Chunk(Vector3i chunkPosition)
 		       position.Z >= 0 && position.Z < SizeZ;
 	}
 
-	public void OnChunkUpdate()
+	public BlockType[] CopyBlocks()
 	{
-		NativeModule.SetChunk(Position, this);
+		lock (Lock)
+		{
+			return (BlockType[])_blocks.Clone();
+		}
 	}
 }
