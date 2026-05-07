@@ -29,7 +29,8 @@ public class Game
 
 	public Game(Window window)
 	{
-		_world = new(_worldRenderer);
+		_world = new();
+		_worldRenderer.World = _world;
 		_window = window;
 	}
 	
@@ -47,19 +48,21 @@ public class Game
 		
 		_shader.Create("data/shaders/block.vert", "data/shaders/block.frag");
 
-		// _camera.OnCameraMovement += () => _world.CheckAndGenerateNewChunk(_camera.Position);
+		_camera.OnCameraMovement += () => _world.CheckAndGenerateNewChunk(_camera.Position);
 		NativeModule.SetConstants(Chunk.SizeX, Chunk.SizeY, Chunk.SizeZ);
-		_world.GenerateChunk(Vector3i.Zero);
-		// _world.GenerateChunk(Vector3i.One);
+		_world.CheckAndGenerateNewChunk(_camera.Position);
 	}
 
 	public void Shutdown()
 	{
 		_shader.Delete();
+		_worldRenderer.Dispose();
 	}
 
 	public void OnRender()
 	{
+		_worldRenderer.ProcessResults(_camera.Position);
+
 		RenderUi();
 		
 		TextureContainer.GetTexture(_textureAtlasId).Use();
