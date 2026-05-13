@@ -41,7 +41,7 @@ public class NativeModule
 
 	public static unsafe void SetChunk(Vector3i chunkPosition, Chunk chunk)
 	{
-		fixed (BlockType* blockType = chunk._blocks)
+		fixed (BlockType* blockType = chunk.Blocks)
 			SetChunk(chunkPosition.X, chunkPosition.Y, chunkPosition.Z, (IntPtr)blockType);
 	}
 

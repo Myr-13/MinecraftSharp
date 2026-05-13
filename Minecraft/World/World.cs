@@ -6,7 +6,7 @@ public class World
 {
     public Dictionary<Vector3i, Chunk> Chunks = new();
     private Vector3i _oldCameraPosition = Vector3i.Zero;
-    public const int RenderDistance = 1;
+    public const int RenderDistance = 32;
 
     public void GenerateChunk(Vector3i chunkPosition)
     {

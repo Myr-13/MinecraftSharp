@@ -1,6 +1,6 @@
 ﻿namespace Minecraft.World;
 
-public enum BlockType : uint
+public enum BlockType : byte
 {
 	Air,
 	Stone,

@@ -7,11 +7,11 @@ namespace Minecraft.World;
 public class Chunk(Vector3i chunkPosition)
 {
 	public const int SizeX = 16;
-	public const int SizeY = 16;
+	public const int SizeY = 256;
 	public const int SizeZ = 16;
 	public static readonly Vector3i ChunkSize = new(SizeX, SizeY, SizeZ);
 
-	public BlockType[] _blocks = new BlockType[SizeX * SizeY * SizeZ];
+	public BlockType[] Blocks = new BlockType[SizeX * SizeY * SizeZ];
 	public Vector3i Position = chunkPosition;
 	public object Lock = new();
 	public bool Dirty { get; set; }
@@ -39,11 +39,11 @@ public class Chunk(Vector3i chunkPosition)
 					if (worldY <= height)
 					{
 						if (worldY == height && worldY > 0)
-							_blocks[index] = BlockType.Grass;
+							Blocks[index] = BlockType.Grass;
 						else if (worldY > height - 4)
-							_blocks[index] = BlockType.Dirt;
+							Blocks[index] = BlockType.Dirt;
 						else
-							_blocks[index] = BlockType.Stone;
+							Blocks[index] = BlockType.Stone;
 					}
 				}
 			}
@@ -63,7 +63,7 @@ public class Chunk(Vector3i chunkPosition)
 	public BlockType GetBlock(int x, int y, int z)
 	{
 		// x + (y * WIDTH) + (z * WIDTH * HEIGHT)
-		return _blocks[x + y * SizeX + z * SizeX * SizeY];
+		return Blocks[x + y * SizeX + z * SizeX * SizeY];
 	}
 
 	public void SetBlock(Vector3i position, BlockType block)
@@ -73,7 +73,7 @@ public class Chunk(Vector3i chunkPosition)
 
 	public void SetBlock(int x, int y, int z, BlockType block)
 	{
-		_blocks[x + y * SizeX + z * SizeX * SizeY] = block;
+		Blocks[x + y * SizeX + z * SizeX * SizeY] = block;
 		Dirty = true;
 	}
 
@@ -88,7 +88,7 @@ public class Chunk(Vector3i chunkPosition)
 	{
 		lock (Lock)
 		{
-			return (BlockType[])_blocks.Clone();
+			return (BlockType[])Blocks.Clone();
 		}
 	}
 }
