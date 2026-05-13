@@ -8,13 +8,14 @@ public class WorldRenderer : IDisposable
 {
     private Dictionary<Vector3i, Mesh> _meshes = new();
     private HashSet<Vector3i> _pendingMeshes = new();
+    private HashSet<Vector3i> _emptyChunks = new();
     private MeshWorker _meshWorker = new();
     public long VerticesCount { get; private set; }
     public World.World World { get; set; }
 
     public void EnqueueChunkMesh(Vector3i chunkPosition)
     {
-        if (_pendingMeshes.Contains(chunkPosition) || _meshes.ContainsKey(chunkPosition))
+        if (_pendingMeshes.Contains(chunkPosition) || _meshes.ContainsKey(chunkPosition) || _emptyChunks.Contains(chunkPosition))
             return;
 
         if (!World.Chunks.TryGetValue(chunkPosition, out Chunk chunk))
@@ -35,7 +36,11 @@ public class WorldRenderer : IDisposable
             _pendingMeshes.Remove(result.ChunkPosition);
 
             if (!result.Success || result.Vertices.Length == 0)
+            {
+                _emptyChunks.Add(result.ChunkPosition);
                 continue;
+            }
+            _emptyChunks.Remove(result.ChunkPosition);
 
             if (_meshes.ContainsKey(result.ChunkPosition))
                 RemoveMesh(result.ChunkPosition);
@@ -54,29 +59,40 @@ public class WorldRenderer : IDisposable
         foreach (Vector3i pos in toRemove)
             RemoveMesh(pos);
 
+        List<Vector3i> emptyToRemove = new();
+        foreach (Vector3i pos in _emptyChunks)
+            if (World.IsOutsideRenderDistance(pos, cameraPosition))
+                emptyToRemove.Add(pos);
+
+        foreach (Vector3i pos in emptyToRemove)
+            _emptyChunks.Remove(pos);
+
         foreach (Vector3i pos in World.Chunks.Keys)
         {
             bool hasMesh = _meshes.ContainsKey(pos);
             bool isPending = _pendingMeshes.Contains(pos);
             bool isOutside = World.IsOutsideRenderDistance(pos, cameraPosition);
 
-            if (isOutside || isPending)
+            if (isOutside)
                 continue;
 
-            if (!hasMesh)
-            {
-                EnqueueChunkMesh(pos);
-            }
-            else if (World.Chunks[pos].Dirty)
+            if (World.Chunks[pos].Dirty)
             {
                 World.Chunks[pos].Dirty = false;
-                _pendingMeshes.Add(pos);
-                RemoveMesh(pos);
+                _emptyChunks.Remove(pos);
+                if (!isPending)
+                    _pendingMeshes.Add(pos);
+                if (hasMesh)
+                    RemoveMesh(pos);
                 _meshWorker.EnqueueTask(new MeshTask
                 {
                     ChunkPosition = pos,
                     Blocks = World.Chunks[pos].CopyBlocks()
                 });
+            }
+            else if (!hasMesh && !isPending)
+            {
+                EnqueueChunkMesh(pos);
             }
         }
     }

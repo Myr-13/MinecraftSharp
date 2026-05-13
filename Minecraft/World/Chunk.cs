@@ -6,9 +6,9 @@ namespace Minecraft.World;
 
 public class Chunk(Vector3i chunkPosition)
 {
-	public const int SizeX = 4;
-	public const int SizeY = 4;
-	public const int SizeZ = 4;
+	public const int SizeX = 16;
+	public const int SizeY = 16;
+	public const int SizeZ = 16;
 	public static readonly Vector3i ChunkSize = new(SizeX, SizeY, SizeZ);
 
 	public BlockType[] _blocks = new BlockType[SizeX * SizeY * SizeZ];
@@ -16,47 +16,43 @@ public class Chunk(Vector3i chunkPosition)
 	public object Lock = new();
 	public bool Dirty { get; set; }
 
-	private void GenerateNoise()
+	private void GenerateTerrain()
 	{
 		var noise = new OpenSimplexNoise3DGenerator(1);
-		
+		float scale = 0.02f;
+
 		for (int x = 0; x < SizeX; x++)
 		{
-			for (int y = 0; y < SizeY; y++)
+			for (int z = 0; z < SizeZ; z++)
 			{
-				for (int z = 0; z < SizeZ; z++)
+				float worldX = Position.X * SizeX + x;
+				float worldZ = Position.Z * SizeZ + z;
+
+				float noiseVal = (float)noise.At(worldX * scale, worldZ * scale, 0.0);
+				int height = 60 + (int)(noiseVal * 10);
+
+				for (int y = 0; y < SizeY; y++)
 				{
-					float noiseX = Position.X * SizeX + x;
-					float noiseY = Position.Y * SizeY + y;
-					float noiseZ = Position.Z * SizeZ + z;
-					if (noise.At(noiseX / SizeX, noiseY / SizeY, noiseZ / SizeZ) < 0.3f)
-						continue;
-					_blocks[x + y * SizeX + z * SizeX * SizeY] = BlockType.Gravel;
+					int worldY = Position.Y * SizeY + y;
+					int index = x + y * SizeX + z * SizeX * SizeY;
+
+					if (worldY <= height)
+					{
+						if (worldY == height && worldY > 0)
+							_blocks[index] = BlockType.Grass;
+						else if (worldY > height - 4)
+							_blocks[index] = BlockType.Dirt;
+						else
+							_blocks[index] = BlockType.Stone;
+					}
 				}
 			}
 		}
 	}
 
-	private void GenerateFill()
-	{
-		// for (int x = 0; x < SizeX; x++)
-		// {
-		// 	for (int y = 0; y < SizeY; y++)
-		// 	{
-		// 		for (int z = 0; z < SizeZ; z++)
-		// 		{
-		// 			_blocks[x + y * SizeX + z * SizeX * SizeY] = BlockType.Stone;
-		// 		}
-		// 	}
-		// }
-
-		SetBlock(1, 1, 1, BlockType.Stone);
-	}
-
 	public void Generate()
 	{
-		// GenerateNoise();
-		GenerateFill();
+		GenerateTerrain();
 	}
 
 	public BlockType GetBlock(Vector3i position)

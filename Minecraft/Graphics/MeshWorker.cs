@@ -54,7 +54,7 @@ public class MeshWorker : IDisposable
                         Success = true
                     });
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     _results.Enqueue(new MeshResult
                     {

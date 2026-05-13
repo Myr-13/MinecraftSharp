@@ -50,7 +50,7 @@ public class Game
 
 		_camera.OnCameraMovement += () => _world.CheckAndGenerateNewChunk(_camera.Position);
 		NativeModule.SetConstants(Chunk.SizeX, Chunk.SizeY, Chunk.SizeZ);
-		_world.CheckAndGenerateNewChunk(_camera.Position);
+		_world.GenerateChunk(Vector3i.Zero);
 	}
 
 	public void Shutdown()
