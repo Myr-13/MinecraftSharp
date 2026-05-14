@@ -6,7 +6,7 @@ public class World
 {
     public Dictionary<Vector3i, Chunk> Chunks = new();
     private Vector3i _oldCameraPosition = Vector3i.Zero;
-    public const int RenderDistance = 32;
+    public const int RenderDistance = 16;
 
     public void GenerateChunk(Vector3i chunkPosition)
     {
@@ -60,14 +60,14 @@ public class World
         chunk.SetBlock(localPos, block);
     }
 
-    private static Vector3i GetChunkPos(Vector3i worldPos)
-    {
-        return new Vector3i(
-            (int)Math.Floor((float)worldPos.X / Chunk.SizeX),
-            (int)Math.Floor((float)worldPos.Y / Chunk.SizeY),
-            (int)Math.Floor((float)worldPos.Z / Chunk.SizeZ)
-        );
-    }
+	private static Vector3i GetChunkPos(Vector3i worldPos)
+	{
+		return new Vector3i(
+			(int)Math.Floor((float)worldPos.X / Chunk.SizeX),
+			0,
+			(int)Math.Floor((float)worldPos.Z / Chunk.SizeZ)
+		);
+	}
 
     public void CheckAndGenerateNewChunk(Vector3 position)
     {
@@ -77,24 +77,22 @@ public class World
             return;
         _oldCameraPosition = cameraChunkPosition;
 
-        for (int x = -RenderDistance; x <= RenderDistance; x++)
-            for (int y = -RenderDistance; y <= RenderDistance; y++)
-                for (int z = -RenderDistance; z <= RenderDistance; z++)
-                {
-                    Vector3i chunkPosition = cameraChunkPosition + new Vector3i(x, y, z);
-                    if (!Chunks.ContainsKey(chunkPosition))
-                        GenerateChunk(chunkPosition);
-                }
+		for (int x = -RenderDistance; x <= RenderDistance; x++)
+			for (int z = -RenderDistance; z <= RenderDistance; z++)
+				{
+					Vector3i chunkPosition = cameraChunkPosition + new Vector3i(x, 0, z);
+					if (!Chunks.ContainsKey(chunkPosition))
+						GenerateChunk(chunkPosition);
+				}
     }
 
-    public bool IsOutsideRenderDistance(Vector3i chunkPos, Vector3 cameraPosition)
-    {
-        Vector3i cameraChunkPos = MathUtils.FloorVector(cameraPosition / Chunk.ChunkSize);
-        int dx = Math.Abs(chunkPos.X - cameraChunkPos.X);
-        int dy = Math.Abs(chunkPos.Y - cameraChunkPos.Y);
-        int dz = Math.Abs(chunkPos.Z - cameraChunkPos.Z);
-        return dx > RenderDistance || dy > RenderDistance || dz > RenderDistance;
-    }
+	public bool IsOutsideRenderDistance(Vector3i chunkPos, Vector3 cameraPosition)
+	{
+		Vector3i cameraChunkPos = MathUtils.FloorVector(cameraPosition / Chunk.ChunkSize);
+		int dx = Math.Abs(chunkPos.X - cameraChunkPos.X);
+		int dz = Math.Abs(chunkPos.Z - cameraChunkPos.Z);
+		return dx > RenderDistance || dz > RenderDistance;
+	}
 
     public Vector3i? IntersectLine(Vector3 start, Vector3 end, ref Vector3i prevBlock)
     {

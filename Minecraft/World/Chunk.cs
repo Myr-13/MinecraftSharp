@@ -20,6 +20,7 @@ public class Chunk(Vector3i chunkPosition)
 	{
 		var noise = new OpenSimplexNoise3DGenerator(1);
 		float scale = 0.02f;
+		const int threshold = 60;
 
 		for (int x = 0; x < SizeX; x++)
 		{
@@ -36,7 +37,11 @@ public class Chunk(Vector3i chunkPosition)
 					int worldY = Position.Y * SizeY + y;
 					int index = x + y * SizeX + z * SizeX * SizeY;
 
-					if (worldY <= height)
+					if (worldY < threshold)
+					{
+						Blocks[index] = BlockType.Stone;
+					}
+					else if (worldY <= height)
 					{
 						if (worldY == height && worldY > 0)
 							Blocks[index] = BlockType.Grass;
