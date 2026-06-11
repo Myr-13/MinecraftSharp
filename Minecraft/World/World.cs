@@ -2,20 +2,32 @@
 
 namespace Minecraft.World;
 
-public class World
+public class World : IDisposable
 {
     public Dictionary<Vector3i, Chunk> Chunks = new();
     private Vector3i _oldCameraPosition = Vector3i.Zero;
-    public const int RenderDistance = 16;
+    private HashSet<Vector3i> _generatingChunks = new();
+    private ChunkGenerator _chunkGenerator = new();
+    public const int RenderDistance = 12;
 
     public void GenerateChunk(Vector3i chunkPosition)
     {
-        if (Chunks.ContainsKey(chunkPosition))
+        if (Chunks.ContainsKey(chunkPosition) || _generatingChunks.Contains(chunkPosition))
             return;
 
-        Chunk chunk = new(chunkPosition);
-        chunk.Generate();
-        Chunks[chunkPosition] = chunk;
+        _generatingChunks.Add(chunkPosition);
+        _chunkGenerator.EnqueueTask(new ChunkGenerationTask { ChunkPosition = chunkPosition });
+    }
+
+    public void ProcessGenerationResults()
+    {
+        while (_chunkGenerator.TryDequeueResult(out ChunkGenerationResult result))
+        {
+            _generatingChunks.Remove(result.ChunkPosition);
+
+            if (result.Success && result.Chunk != null)
+                Chunks[result.ChunkPosition] = result.Chunk;
+        }
     }
 
     public BlockType GetBlock(Vector3i position)
@@ -111,5 +123,10 @@ public class World
         }
 
         return null;
+    }
+
+    public void Dispose()
+    {
+        _chunkGenerator.Dispose();
     }
 }

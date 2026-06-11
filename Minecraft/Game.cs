@@ -57,10 +57,12 @@ public class Game
 	{
 		_shader.Delete();
 		_worldRenderer.Dispose();
+		_world.Dispose();
 	}
 
 	public void OnRender()
 	{
+		_world.ProcessGenerationResults();
 		_worldRenderer.ProcessResults(_camera.Position);
 
 		RenderUi();
